@@ -11,23 +11,36 @@
 (defn create-menu []
   (java.awt.PopupMenu.))
 
-(defn create-menu-item [desc enabled]
-  (let [item (java.awt.MenuItem. desc)]
+(defn create-menu-item [desc enabled f]
+  (let [listener (reify java.awt.event.ActionListener 
+                   (actionPerformed 
+                     [this event] (f))) 
+        item (java.awt.MenuItem. desc)]
+    (.addActionListener item listener)
     (.setEnabled item enabled)
     item))
 
-(defn update-items [menu items]
+(defn update-items [bug-id menu items]
   (.removeAll menu)
-  (.add menu (create-menu-item "Priority 1" false))
+  (if bug-id
+    (do
+      (.add menu (create-menu-item "[00:16] - stop working" true #(update-items nil menu items))) 
+      (.addSeparator menu))) 
+  (.add menu (create-menu-item "Priority 1" false nil))
   (.addSeparator menu)
-  (reduce #(do (.add % %2) %) menu (map #(java.awt.MenuItem. (:description %)) items)))
+  (reduce #(do (.add % %2) %) menu (map #(create-menu-item
+                                           (if (= bug-id (:number %))
+                                             (str "•" (:description %))
+                                             (:description %)) 
+                                           true
+                                          (fn [] (update-items (:number %) menu items))) items)))
 
-(defn create-tray-icon [menu]
-  (let [icon (java.awt.TrayIcon. (load-icon "resources/clock.png") "" menu)]
+(defn create-tray-icon [menu icon]
+  (let [icon (java.awt.TrayIcon. (load-icon icon) "" menu)]
     (.setImageAutoSize icon false)
     icon))
 
-; --------------------------------------------------------------------------
+; IO -----------------------------------------------------------------------
 
 (defn parse-bug [bugs [number line]]
   (if (re-matches #"\S.*" line)
@@ -67,4 +80,32 @@
       (assoc-in [:bugs id] bug)
       (assoc-in [:lines (:number bug)] (write-bug bug)))))
 
+; Track file updates -------------------------------------------------------
+
+(defn watch-file [filename interval f]
+  (let [file (java.io.File. filename)
+        timestamp (atom 0)
+        listener (reify java.awt.event.ActionListener
+                   (actionPerformed
+                     [this event]
+                     (if (not= @timestamp (.lastModified file))
+                       (do
+                         (f)
+                         (reset! timestamp (.lastModified file))))))
+        timer (javax.swing.Timer. interval listener)]
+    (.start timer)
+    timer))
+
+; main ---------------------------------------------------------------------
+
+(defn main []
+  (let [bugs (atom nil)
+        menu (create-menu)
+        icon (create-tray-icon menu "resources/clock.png")]
+    (.add (get-systray) icon)
+    (watch-file "tracker.txt" 1000
+                #(do
+                   (printf "--- reloading " "tracker.txt")
+                   (reset! bugs (load-bugs "tracker.txt"))
+                   (update-items nil menu (:bugs @bugs))))))
 
