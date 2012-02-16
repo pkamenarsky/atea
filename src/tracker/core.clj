@@ -30,7 +30,10 @@
   (.addSeparator menu)
   (reduce #(do (.add % %2) %) menu (map #(create-menu-item
                                            (if (= bug-id (:number %))
-                                             (str "•" (:description %))
+                                             ;(str "◆ " (:description %))
+                                             ;(str "✦ " (:description %))
+                                             ;(str "● " (:description %))
+                                             (str "➡ " (:description %))
                                              (:description %)) 
                                            true
                                           (fn [] (update-items (:number %) menu items))) items)))
