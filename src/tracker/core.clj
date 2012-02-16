@@ -1,8 +1,5 @@
 (ns tracker.core
-  (:require [clojure.string :as string])
-  (:import (org.eclipse.swt.widgets Display Shell)
-           (org.eclipse.swt.layout GridLayout)
-           (org.eclipse.swt.events ShellAdapter)))
+  (:require [clojure.string :as string]))
 
 (defn load-icon [name]
   (let [is (.getResourceAsStream (ClassLoader/getSystemClassLoader) name)]
@@ -12,12 +9,7 @@
   (java.awt.SystemTray/getSystemTray))
 
 (defn create-menu []
-  (let [menu (java.awt.PopupMenu.)]
-    (println "enabled " (.isEnabled menu))
-    (.addActionListener menu (reify java.awt.event.ActionListener 
-                               (actionPerformed 
-                                 [this event] (println "ACTION"))))
-    menu))
+  (java.awt.PopupMenu.))
 
 (defn create-menu-item [desc enabled f]
   (let [listener (reify java.awt.event.ActionListener 
@@ -48,20 +40,8 @@
 
 (defn create-tray-icon [menu icon]
   (let [icon (java.awt.TrayIcon. (load-icon icon) "" menu)]
-    (.setImageAutoSize icon true)
-    (.addActionListener icon (reify java.awt.event.ActionListener 
-                               (actionPerformed 
-                                 [this event] (println "ACTION"))))
-    (.addMouseListener icon (reify java.awt.event.MouseListener
-                              (mousePressed [this event] (println "pressed " (.getSize icon)))
-                              (mouseReleased [this event] (println "released"))
-                              (mouseClicked [this event] (println "clicked")))) 
+    (.setImageAutoSize icon false)
     icon))
-
-(defn swt-thread [f]
-  (.asyncExec (Display/getDefault) (reify java.lang.Runnable
-                       (run [this] (f)))))
-
 
 ; IO -----------------------------------------------------------------------
 
@@ -126,39 +106,9 @@
         menu (create-menu)
         icon (create-tray-icon menu "resources/clock.png")]
     (.add (get-systray) icon)
-    (println "size " (.getSize icon))
     (watch-file "tracker.txt" 1000
                 #(do
                    (printf "--- reloading " "tracker.txt")
                    (reset! bugs (load-bugs "tracker.txt"))
                    (update-items nil menu (:bugs @bugs))))))
-
-; SWT ----------------------------------------------------------------------
-
-(defn create-shell [display shell]
-(let [layout (GridLayout.)]
- (doto shell
-   (.setText "SWT Test")
-   (.setLayout layout)
-   (.addShellListener
-    (proxy [ShellAdapter] []
-      (shellClosed [evt]
-        (System/exit 0)))))))
-
-(defn swt-loop [display shell]
-(loop []
- (if (.isDisposed shell)
-   (.dispose display)
-   (do
-     (if (not (.readAndDispatch display))
-       (.sleep display))
-     (recur)))))
-
-(defn begin []
- (let [display (Display.)
-       shell (Shell. display)]
-   (create-shell display shell)
-   (.setSize shell 700 700)
-   (.open shell)
-   (swt-loop display shell)))
 
