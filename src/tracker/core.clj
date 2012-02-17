@@ -22,13 +22,52 @@
 
 (defn parition-items [items]
   ; first group by priority into a {pri item} map,
-  ; then partation the first 10 items of every priority by project
+  ; then group the first 10 items of every priority by project
   (reduce (fn [a [pri item]]
-            (assoc a pri (partition-by :project (take 10 item))))
+            (assoc a pri (group-by :project (take 10 item))))
           {}
           (group-by :priority items)))
 
+(defn add-section [bug-id menu add-sep? title items all-items]
+  (if add-sep?
+    (.addSeparator menu)) 
+  (.addItem menu title nil)
+  (.addSeparator menu)
+  (doseq
+    [item items]
+    (.addItem
+      menu
+      (if (= bug-id (:number item))
+        (str "➡ " (:description item))
+        (:description item)) 
+      (action #(update-items (:number item) menu all-items)))))
+
+(defn add-priority [bug-id menu add-sep? priority prjs all-items]
+  (add-section
+    bug-id
+    menu
+    add-sep?
+    (str "Priority " priority " - " (key (first prjs)))
+    (val (first prjs))
+    all-items)
+  (doseq [[prj items] (next prjs)] (add-section bug-id menu true prj items all-items)))
+
 (defn update-items [bug-id menu items]
+  ; remove old items
+  (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
+
+  ; add "now working" section
+  (if bug-id
+    (do
+      (.addItem menu "[00:16] - stop working" (action #(update-items nil menu items))) 
+      (.addSeparator menu))) 
+
+  ; add items sorted by priority and project
+  (let [part-items (sort (parition-items items))]
+    (add-priority bug-id menu false (key (first part-items)) (val (first part-items)) items)
+    (doseq [[pri prjs] (next part-items)] (add-priority bug-id menu true pri prjs items))))
+
+(defn update-items2 [bug-id menu items]
   (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
   (if bug-id
     (do
