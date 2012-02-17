@@ -28,69 +28,56 @@
           {}
           (group-by :priority items)))
 
-(defn add-section [bug-id menu add-sep? title items all-items]
-  (if add-sep?
-    (.addSeparator menu)) 
-  (.addItem menu title nil)
-  (.addSeparator menu)
-  (doseq
-    [item items]
-    (.addItem
-      menu
-      (if (= bug-id (:number item))
-        (str "➡ " (:description item))
-        (:description item)) 
-      (action #(update-items (:number item) menu all-items)))))
+(defn update-items [bug-id menu items activate-fn]
+  ; project / priority section functions
+  (let [add-section
+        (fn [add-sep? title sec-items]
+          (if add-sep?
+            (.addSeparator menu)) 
+          (.addItem menu title nil)
+          (.addSeparator menu)
+          (doseq
+            [item sec-items]
+            (.addItem
+              menu
+              (if (= bug-id (:number item))
+                (str "➡ " (:description item))  ;◆✦●
+                (:description item)) 
+              (action #(do
+                         (activate-fn item)
+                         (update-items (:number item) menu items activate-fn))))))
 
-(defn add-priority [bug-id menu add-sep? priority prjs all-items]
-  (add-section
-    bug-id
-    menu
-    add-sep?
-    (str "Priority " priority " - " (key (first prjs)))
-    (val (first prjs))
-    all-items)
-  (doseq [[prj items] (next prjs)] (add-section bug-id menu true prj items all-items)))
+        add-priority
+        (fn [add-sep? priority prjs]
+          (add-section
+            add-sep?
+            (str "Priority " priority " - " (key (first prjs)))
+            (val (first prjs)))
+          (doseq [[prj items] (next prjs)] (add-section true prj items)))]
 
-(defn update-items [bug-id menu items]
-  ; remove old items
-  (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
+    ; remove old items
+    (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
 
-  ; add "now working" section
-  (if bug-id
-    (do
-      (.addItem menu "[00:16] - stop working" (action #(update-items nil menu items))) 
-      (.addSeparator menu))) 
+    ; add "now working" section
+    (if bug-id
+      (do
+        (.addItem
+          menu
+          "[00:16] - stop working"
+          (action #(update-items nil menu items activate-fn))) 
+        (.addSeparator menu))) 
 
-  ; add items sorted by priority and project
-  (let [part-items (sort (parition-items items))]
-    (add-priority bug-id menu false (key (first part-items)) (val (first part-items)) items)
-    (doseq [[pri prjs] (next part-items)] (add-priority bug-id menu true pri prjs items))))
-
-(defn update-items2 [bug-id menu items]
-  (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
-  (if bug-id
-    (do
-      (.addItem menu "[00:16] - stop working" (action #(update-items nil menu items))) 
-      (.addSeparator menu))) 
-  (.addItem menu "Priority 1" nil) 
-  (.addSeparator menu) 
-  (doseq [item items] (.addItem
-                        menu
-                        (if (= bug-id (:number item))
-                          ;(str "◆ " (:description %))
-                          ;(str "✦ " (:description %))
-                          ;(str "● " (:description %))
-                          (str "➡ " (:description item))
-                          (:description item)) 
-                        (action #(update-items (:number item) menu items)))))
+    ; add items sorted by priority and project
+    (let [part-items (sort (parition-items items))]
+      (add-priority false (key (first part-items)) (val (first part-items)))
+      (doseq [[pri prjs] (next part-items)] (add-priority true pri prjs)))))
 
 ; IO -----------------------------------------------------------------------
 
 (defn maybe-int [string]
   (try
     (Integer. string)
-    (catch Exception e string)))
+    (catch Exception e 999)))
 
 (defn parse-bug [bugs [number line]]
   (if (re-matches #"[^#\s].*" line) 
@@ -150,12 +137,15 @@
 
 (defn main []
   (let [bugs (atom nil)
+        active-item (atom nil)
         icon (load-icon "resources/clock.png")
         menu (create-menu)]
     (.addTrayIcon (get-tray) menu 0)
     (.setIcon menu icon)
-    (watch-file "tracker.txt" 1000
-                #(do
-                   (reset! bugs (load-bugs "tracker.txt"))
-                   (update-items nil menu (:bugs @bugs))))))
+    (watch-file
+      "tracker.txt"
+      1000
+      #(do
+         (reset! bugs (load-bugs "tracker.txt"))
+         (update-items nil menu (:bugs @bugs) (partial reset! active-item))))))
 
