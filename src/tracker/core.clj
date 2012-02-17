@@ -140,6 +140,7 @@
         active-item (atom nil)
         icon (load-icon "resources/clock.png")
         menu (create-menu)]
+    (.setActionListener menu (action #()))
     (.addTrayIcon (get-tray) menu 0)
     (.setIcon menu icon)
     (watch-file

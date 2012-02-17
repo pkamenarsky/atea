@@ -78,11 +78,12 @@ JNIEnv *JNU_GetEnv()
 		NSStatusBar *bar = [NSStatusBar systemStatusBar];
 		
         _menu = [[NSMenu alloc] initWithTitle: @""];
+        [_menu setDelegate:self];
         
 		_statusItem = [bar statusItemWithLength:NSVariableStatusItemLength];
         [_statusItem setHighlightMode:YES];
         [_statusItem setMenu:_menu];
-
+        
         [_statusItem retain];
 	}
 }
@@ -133,7 +134,44 @@ JNIEnv *JNU_GetEnv()
 	return [_statusItem toolTip];
 }
 
-- (void)itemSelected:(id) sender
+- (void)menuWillOpen:(NSMenu *)menu
+{
+    static jmethodID mid;
+    
+    if (mid == NULL)
+    {
+        //first time initialization
+        jclass serviceClass =
+        (*JNU_GetEnv())->FindClass(JNU_GetEnv(), "org/jdesktop/jdic/tray/internal/impl/MacTrayIconService");
+        if (serviceClass == NULL)
+        {
+            //error handling
+            NSLog(@"serviceClass is null!, can't callback and notifiy MacTrayIconService about status item events.");
+            return;
+        }
+        mid = (*JNU_GetEnv())->GetMethodID(JNU_GetEnv(), serviceClass, "statusItemSelectedCallback", "()V");
+        if (mid == NULL)
+        {
+            //error handling
+            NSLog(@"method ID for 'statusItemSelectedCallback' is null!, can't callback and notifiy MacTrayIconService about status item selected events.");
+            return;
+        }
+    }
+    
+    if (mid != NULL)
+    {
+        if (_javaPeer != NULL)
+        {
+            if (JNI_FALSE == (*JNU_GetEnv())->IsSameObject(JNU_GetEnv(), _javaPeer, NULL))
+            {
+                //_javaPeer is non-null AND still holds a reference to a live object
+                (*JNU_GetEnv())->CallVoidMethod(JNU_GetEnv(), _javaPeer, mid);
+            }
+        }
+    }
+}
+
+- (void)itemSelected:(id)sender
 {
     static jmethodID mid;
         
@@ -145,7 +183,7 @@ JNIEnv *JNU_GetEnv()
         if (serviceClass == NULL)
         {
             //error handling
-            NSLog(@"serviceClass is null!, can't callback and notifiy MacTrayIconService about mouse events.");
+            NSLog(@"serviceClass is null!, can't callback and notifiy MacTrayIconService about item events.");
             return;
         }
         mid = (*JNU_GetEnv())->GetMethodID(JNU_GetEnv(), serviceClass, "itemSelectedCallback", "(I)V");
@@ -169,7 +207,6 @@ JNIEnv *JNU_GetEnv()
             }
         }
     }
-
 }
 
 - (void)setJavaPeer:(jobject) peer

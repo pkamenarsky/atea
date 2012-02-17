@@ -32,7 +32,7 @@
 
 
 
-@interface StatusItemWrapper : NSObject {
+@interface StatusItemWrapper : NSObject <NSMenuDelegate> {
 
 	NSStatusItem *_statusItem;
     NSMenu *_menu;

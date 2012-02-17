@@ -81,6 +81,8 @@ public class MacTrayIconService
 	private int tag;
 	private int itemCount;
 
+	private ActionListener listener;
+
 	private ArrayList<Integer> itemTags = new ArrayList<Integer>();
 	private Map<Integer, ActionListener> listenerMap = new HashMap<Integer, ActionListener>();
 
@@ -107,13 +109,20 @@ public class MacTrayIconService
 	
     private native void removeItemNative(long nsStatusItemPtr, int index);
 
-    /**
-     * Not implementd on the Mac
-     *
-     * @param caption
-     * @param text
-     * @param type
-     */
+	public MacTrayIconService(ActionListener listener)
+	{
+		this.listener = listener;
+	}
+
+	public MacTrayIconService()
+	{
+		this(null);
+	}
+
+	public void setActionListener(ActionListener listener)
+	{
+		this.listener = listener;
+	}
 
     public void addNotify()
     {
@@ -320,7 +329,16 @@ public class MacTrayIconService
 		}
 	}
 
-	void itemSelectedCallback(int tag) {
+	void statusItemSelectedCallback()
+	{
+		if (listener != null)
+		{
+			listener.actionPerformed(new ActionEvent(this, 0, "statusItemSelected"));
+		}
+	}
+
+	void itemSelectedCallback(int tag)
+	{
 		if (listenerMap.containsKey(tag))
 		{
 			listenerMap.get(tag).actionPerformed(new ActionEvent(this, tag, "itemSelected"));
