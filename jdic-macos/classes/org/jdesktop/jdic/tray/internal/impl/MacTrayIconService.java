@@ -75,6 +75,7 @@ public class MacTrayIconService
 
     private JPopupMenu menu;
     private Icon icon;
+	private boolean isTemplate;
     private boolean autoSize;
     private String caption; //on the mac, this is the title(label) of the Status Item(Tray Icon)
     private String toolTipText;
@@ -134,11 +135,13 @@ public class MacTrayIconService
 
     private native void setImageNative(long nsStatusItemPtr, byte[] rasterData, int imageWidth, int imageHeight,
                                         int bitsPerSample, int samplesPerPixel, boolean hasAlpha, boolean isPlanar,
-                                        String colorSpaceName, int bytesPerRow, int bitsPerPixel);
+                                        String colorSpaceName, int bytesPerRow, int bitsPerPixel, boolean isTemplate);
 
     private native void setTitleNative(long nsStatusItemPtr, String title);
 
     private native void setToolTipNative(long nsStatusItemPtr, String toolTipText);
+
+    private native void addItemNative(long nsStatusItemPtr, String item, int index);
 
     private native void setIsArmedNative(long nsStatusItemPtr, boolean state);//control highlight of item in status bar
 
@@ -240,7 +243,7 @@ public class MacTrayIconService
 			if (nativePeerExists) {
 				setImageNative(nsStatusItemWrapperPointer, pixels, imageWidth,
 						imageHeight, bitsPerSample, samplesPerPixel, hasAlpha,
-						isPlanar, colorSpaceName, bytesPerRow, bitsPerPixel);
+						isPlanar, colorSpaceName, bytesPerRow, bitsPerPixel, isTemplate);
 			}
         }
     }
@@ -410,8 +413,9 @@ public class MacTrayIconService
     }
 
 
-    public void setIcon(final Icon i) {
+    public void setIcon(final Icon i, final boolean isTemplate) {
 		icon = i;
+		this.isTemplate = isTemplate;
 		if (observer != null) {
 			observer.setUpdate(false);
 			observer = null;
@@ -422,6 +426,10 @@ public class MacTrayIconService
 			((ImageIcon) icon).setImageObserver(observer);
 		}
 		updateIcon();
+	}
+
+    public void setIcon(final Icon i) {
+		setIcon(i, true);
 	}
 
     /**
@@ -452,6 +460,14 @@ public class MacTrayIconService
             setToolTipNative(nsStatusItemWrapperPointer, toolTipText);
         }
     }
+
+	public void addItem(String item, int index)
+	{
+		if (nativePeerExists)
+		{
+			addItemNative(nsStatusItemWrapperPointer, item, index);
+		}
+	}
 
     public void setIconAutoSize(boolean b)
     {
@@ -526,6 +542,10 @@ public class MacTrayIconService
 
     }
 
+
+	void itemSelectedCallback(int index) {
+		System.out.println("OH YES BABY");
+	}
 
     /**
      * Called from JNI when a mouse event has occured in the TrayIcon. This will be on the AWT-AppKit thread, NOT

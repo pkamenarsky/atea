@@ -1,5 +1,7 @@
 (ns tracker.core
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string])
+  (:import org.jdesktop.jdic.tray.internal.impl.MacSystemTrayService)
+  (:import org.jdesktop.jdic.tray.internal.impl.MacTrayIconService))
 
 (defn load-icon [name]
   (let [is (.getResourceAsStream (ClassLoader/getSystemClassLoader) name)]
@@ -111,4 +113,18 @@
                    (printf "--- reloading " "tracker.txt")
                    (reset! bugs (load-bugs "tracker.txt"))
                    (update-items nil menu (:bugs @bugs))))))
+
+
+; Native -------------------------------------------------------------------
+
+(defn test-native []
+  (let [tray (MacSystemTrayService/getInstance)
+        icon (MacTrayIconService.)]
+    ;(.setCaption icon "test")
+    (.setIcon icon (javax.swing.ImageIcon. (load-icon "resources/clock.png")))
+    (.addTrayIcon tray icon 0)
+    (.addItem icon "asdad" 0)
+    (.addItem icon "sfgs543lfgn ldfldksf s" 0)
+    (.addItem icon "sefhsdkf jdsk fldsfk ljsdfl hs" 0)
+    (.addItem icon "adfdskfjdsf kdsf ldsj" 0)))
 

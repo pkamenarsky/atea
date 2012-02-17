@@ -36,18 +36,15 @@
 @interface StatusItemWrapper : NSObject {
 
 	NSStatusItem *_statusItem;
-	StatusItemView *_customView; //view for the status item to display an image and/or text	
-	
-	int _currentFrame; //the current frame number if the img is an animation, such as an animated GIF.
-	int _frameCount; //the total number of frames if the image is animated
-	BOOL _running; //true if the image is being animated
-	int  _loopCount; //if an animation is running, the number of animation loops remaining to run. If the GIF is set to loop forever, this is ignored
+    NSMenu *_menu;
+
 	jobject _javaPeer; //if not nil, holds global reference to the Java object that is managing this native instance in the JVM
 }
 
 - (void)installStatusItem;
 - (void)removeStatusItem;
 
+- (NSMenu*)menu;
 - (void)setImage:(NSImage*)theImage;
 - (NSImage*)image;
 - (void)setLabelText:(NSString*)label;
@@ -60,6 +57,8 @@
 
 - (void)setJavaPeer:(jobject) peer;
 - (jobject)javaPeer;
+
+- (void)itemSelected:(id) sender;
 
 @end
 

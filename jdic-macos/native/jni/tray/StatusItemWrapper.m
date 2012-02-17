@@ -34,7 +34,6 @@
 - (id)init
 {
 	self = [super init];
-	_customView = [[StatusItemView alloc] initWithFrame:NSMakeRect(0,0,22,22)]; //initially sized for an icon, no text
 	_javaPeer = nil;
 
 	return self;
@@ -46,23 +45,22 @@
 	{
 		NSStatusBar *bar = [NSStatusBar systemStatusBar];
 		
+        _menu = [[NSMenu alloc] initWithTitle: @""];
+        
 		_statusItem = [bar statusItemWithLength:NSVariableStatusItemLength];
-		[_statusItem retain];
-				
-		[_statusItem setView:_customView];
-		[_customView setStatusItem:_statusItem];
+        [_statusItem setHighlightMode:YES];
+        [_statusItem setMenu:_menu];
+
+        [_statusItem retain];
 	}
 }
 
 - (void)removeStatusItem
 {
-	_running = NO; //stop any image animations
-	
 	if (_statusItem != nil)
 	{
 		NSStatusBar *bar = [NSStatusBar systemStatusBar];
 		[bar removeStatusItem:_statusItem];			
-		[_customView removeFromSuperview];
 	}
 	[_statusItem release];
 	_statusItem = nil;
@@ -70,52 +68,90 @@
 
 - (void)setImage:(NSImage*)theImage
 {
-	[_customView setImage:theImage];
+    [_statusItem setImage:theImage];
 }
 
 - (NSImage*)image
 {
-	return [_customView image];
+	return [_statusItem image];
+}
+
+- (NSMenu*)menu
+{
+    return _menu;
 }
 
 - (void)setLabelText:(NSString*)label
 {
-	[_customView setLabelText:label];
+	[_statusItem setTitle:label];
 }
 
 - (NSString*)labelText
 {
-	return [_customView labelText];	
+	return [_statusItem title];	
 }
 
 - (void)setToolTip:(NSString*)toolTip
 {
-	[_customView setToolTip:toolTip];	
+	[_statusItem setToolTip:toolTip];	
 }
 
 - (NSString*)toolTip
 {
-	return [_customView toolTip];
+	return [_statusItem toolTip];
 }
 
 - (void)setIsArmed:(BOOL)armedState
 {
-    [_customView setIsArmed:armedState];
 }
 
 - (BOOL)isArmed
 {
-    return [_customView isArmed];
+    return false;
+}
+
+- (void)itemSelected:(id) sender
+{
+    static jmethodID mid;
+        
+    if (mid == NULL)
+    {
+        //first time initialization
+        jclass serviceClass =
+        (*JNU_GetEnv())->FindClass(JNU_GetEnv(), "org/jdesktop/jdic/tray/internal/impl/MacTrayIconService");
+        if (serviceClass == NULL)
+        {
+            //error handling
+            NSLog(@"serviceClass is null!, can't callback and notifiy MacTrayIconService about mouse events.");
+            return;
+        }
+        mid = (*JNU_GetEnv())->GetMethodID(JNU_GetEnv(), serviceClass, "itemSelectedCallback", "(I)V");
+        if (mid == NULL)
+        {
+            //error handling
+            NSLog(@"method ID for 'itemSelectedCallback' is null!, can't callback and notifiy MacTrayIconService about item selected events.");
+            return;
+        }
+    }
+    
+    if (mid != NULL)
+    {
+        if (_javaPeer != NULL)
+        {
+            if (JNI_FALSE == (*JNU_GetEnv())->IsSameObject(JNU_GetEnv(), _javaPeer, NULL))
+            {
+                //_javaPeer is non-null AND still holds a reference to a live object
+                jint index = [sender tag];
+                (*JNU_GetEnv())->CallVoidMethod(JNU_GetEnv(), _javaPeer, mid, index);
+            }
+        }
+    }
+
 }
 
 - (NSRect)globalFrame
 {
-    NSRect localFrame = [_customView frame];
-    NSPoint globalOrigin = [_customView convertToGlobalPoint:localFrame.origin];
-
-
-    NSRect globalFrame = NSMakeRect(globalOrigin.x, globalOrigin.y, localFrame.size.width, localFrame.size.height);
-
+    NSRect globalFrame = NSMakeRect(0, 0, 0, 0);
     return globalFrame;
 }
 
@@ -127,7 +163,6 @@
         NSLog(@"Out of memory creating week reference for _javaPeer");
         return; // out of memory
     }
-    [_customView setJavaPeer:weakRef];
     _javaPeer = weakRef;
 }
 
@@ -143,12 +178,6 @@
 		[self removeStatusItem];
 	}
 	
-	if (_customView != nil)
-	{
-		[_customView release];
-		_customView = nil;
-	}
-
     (*JNU_GetEnv())->DeleteWeakGlobalRef(JNU_GetEnv(), _javaPeer);
 	_javaPeer = NULL;
 

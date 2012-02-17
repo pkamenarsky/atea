@@ -1,5 +1,8 @@
 /pom.xml
 *jar
+*class
+*jnilib
+/jdic-macoc/build
 /lib
 /classes
 /native

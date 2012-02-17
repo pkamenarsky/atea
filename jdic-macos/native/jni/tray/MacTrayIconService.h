@@ -43,7 +43,7 @@ JNIEXPORT jlong JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconSer
 JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_setImageNative
 (JNIEnv *env, jobject this, jlong nsStatusItemPtr, jbyteArray rasterData, jint imageWidth, jint imageHeight,
                             jint bitsPerSample, jint samplesPerPixel, jboolean hasAlpha, jboolean isPlanar,
-                            jstring colorSpaceName, jint bytesPerRow, jint bitsPerPixel);
+                            jstring colorSpaceName, jint bytesPerRow, jint bitsPerPixel, jboolean isTemplate);
 
 
 /*

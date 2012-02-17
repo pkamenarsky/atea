@@ -36,7 +36,6 @@ JNIEXPORT jlong JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconSer
     StatusItemWrapper *theItem = [[StatusItemWrapper alloc] init];
 
     [theItem setJavaPeer:this];
-
     [theItem installStatusItem];
 
     [pool release];
@@ -135,12 +134,32 @@ JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconServ
     [pool release];
 }
 
+JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_addItemNative
+(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jstring item, jint index)
+{
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    //NSLog(@"In the native setTitleNative method");
+    StatusItemWrapper *theItem;
+    theItem = (id) ((uintptr_t)nsStatusItemPtr);
+
+    
+    NSString *nsItem = ConvertToNSString(env, item);
+    NSMenuItem *nsMenuItem = [[NSMenuItem alloc] initWithTitle:nsItem action:@selector(itemSelected:) keyEquivalent:@""];
+    [nsMenuItem setTarget:theItem];
+    [nsMenuItem setTag:index];
+    
+    //[[theItem menu] addItem:nsMenuItem];
+    [[theItem menu] performSelectorOnMainThread:@selector(addItem:) withObject:nsMenuItem waitUntilDone:NO];  
+
+    [pool release];
+}
 
 
 JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_setImageNative
 (JNIEnv *env, jobject this, jlong nsStatusItemPtr, jbyteArray rasterData, jint imageWidth, jint imageHeight,
                             jint bitsPerSample, jint samplesPerPixel, jboolean hasAlpha, jboolean isPlanar,
-                            jstring colorSpaceName, jint bytesPerRow, jint bitsPerPixel)
+                            jstring colorSpaceName, jint bytesPerRow, jint bitsPerPixel, jboolean isTemplate)
 {
         NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
@@ -191,6 +210,7 @@ JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconServ
         [bmi autorelease];
 
         [bmi addRepresentation:bmrep];
+        [bmi setTemplate:isTemplate];
 
         if ([bmi isValid])
         {
