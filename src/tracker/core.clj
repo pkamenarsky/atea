@@ -5,45 +5,38 @@
 
 (defn load-icon [name]
   (let [is (.getResourceAsStream (ClassLoader/getSystemClassLoader) name)]
-    (javax.imageio.ImageIO/read is)))
+    (javax.swing.ImageIcon. (javax.imageio.ImageIO/read is))))
 
-(defn get-systray []
-  (java.awt.SystemTray/getSystemTray))
+(defn get-tray []
+  (MacSystemTrayService/getInstance))
 
 (defn create-menu []
-  (java.awt.PopupMenu.))
+  (MacTrayIconService.))
 
-(defn create-menu-item [desc enabled f]
-  (let [listener (reify java.awt.event.ActionListener 
-                   (actionPerformed 
-                     [this event] (f))) 
-        item (java.awt.MenuItem. desc)]
-    (.addActionListener item listener)
-    (.setEnabled item enabled)
-    item))
+(defn action [f]
+  (reify java.awt.event.ActionListener 
+    (actionPerformed 
+      [this event] (f))))
+
+; Item management ----------------------------------------------------------
 
 (defn update-items [bug-id menu items]
-  (.removeAll menu)
+  (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
   (if bug-id
     (do
-      (.add menu (create-menu-item "[00:16] - stop working" true #(update-items nil menu items))) 
+      (.addItem menu "[00:16] - stop working" (action #(update-items nil menu items))) 
       (.addSeparator menu))) 
-  (.add menu (create-menu-item "Priority 1" false nil))
-  (.addSeparator menu)
-  (reduce #(do (.add % %2) %) menu (map #(create-menu-item
-                                           (if (= bug-id (:number %))
-                                             ;(str "◆ " (:description %))
-                                             ;(str "✦ " (:description %))
-                                             ;(str "● " (:description %))
-                                             (str "➡ " (:description %))
-                                             (:description %)) 
-                                           true
-                                          (fn [] (update-items (:number %) menu items))) items)))
-
-(defn create-tray-icon [menu icon]
-  (let [icon (java.awt.TrayIcon. (load-icon icon) "" menu)]
-    (.setImageAutoSize icon false)
-    icon))
+  (.addItem menu "Priority 1" nil) 
+  (.addSeparator menu) 
+  (doseq [item items] (.addItem
+                        menu
+                        (if (= bug-id (:number item))
+                          ;(str "◆ " (:description %))
+                          ;(str "✦ " (:description %))
+                          ;(str "● " (:description %))
+                          (str "➡ " (:description item))
+                          (:description item)) 
+                        (action #(update-items (:number item) menu items)))))
 
 ; IO -----------------------------------------------------------------------
 
@@ -105,33 +98,12 @@
 
 (defn main []
   (let [bugs (atom nil)
-        menu (create-menu)
-        icon (create-tray-icon menu "resources/clock.png")]
-    (.add (get-systray) icon)
+        icon (load-icon "resources/clock.png")
+        menu (create-menu)]
+    (.addTrayIcon (get-tray) menu 0)
+    (.setIcon menu icon)
     (watch-file "tracker.txt" 1000
                 #(do
-                   (printf "--- reloading " "tracker.txt")
                    (reset! bugs (load-bugs "tracker.txt"))
                    (update-items nil menu (:bugs @bugs))))))
-
-
-; Native -------------------------------------------------------------------
-
-(defn action [f]
-  (reify java.awt.event.ActionListener 
-    (actionPerformed 
-      [this event] (f))))
-
-(defn test-native []
-  (let [tray (MacSystemTrayService/getInstance)
-        icon (MacTrayIconService.)]
-    ;(.setCaption icon "test")
-    (.setIcon icon (javax.swing.ImageIcon. (load-icon "resources/clock.png")))
-    (.addTrayIcon tray icon 0)
-    (.addItem icon "asdad" 0 nil)
-    (.addItem icon "sfgs543lfgn ldfldksf s" 0 nil)
-    (.addItem icon "sefhsdkf jdsk fldsfk ljsdfl hs" 0 (action #(println "kakakak")))
-    (.addItem icon "adfdskfjdsf kdsf ldsj" 0 nil)
-    (.addItem icon "-" 1 nil)
-    (.removeItem icon 1)))
 

@@ -255,8 +255,18 @@ public class MacTrayIconService
 		}
 	}
 
-	public void addItem(String item, ActionListener listener) {
+	public void addItem(String item, ActionListener listener)
+	{
 		addItem(item, itemCount, listener);
+	}
+
+	public void addSeparator(int index)
+	{
+		addItem("-", index, null);
+	}
+
+	public void addSeparator() {
+		addSeparator(itemCount);
 	}
 
 	public void removeItem(int index)
@@ -274,6 +284,11 @@ public class MacTrayIconService
 			else
 				throw new IllegalArgumentException("No menu item at index " + index);
 		}
+	}
+
+	public int getItemCount()
+	{
+		return itemCount;
 	}
 
     void remove()
