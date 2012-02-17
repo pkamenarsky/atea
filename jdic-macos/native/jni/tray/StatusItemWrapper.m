@@ -28,6 +28,38 @@
 #import "StatusItemWrapper.h"
 
 
+static JavaVM *cached_jvm;
+
+JNIEnv *JNU_GetEnv()
+{
+    JavaVM *jvm = NULL;
+    JNIEnv *env = NULL;
+    
+    if (cached_jvm == NULL)
+    {
+        jsize bufLen = 1;
+        jsize nVMs;
+        jint vmError = JNI_GetCreatedJavaVMs(&jvm,bufLen, &nVMs);
+        if (vmError == 0)
+        {
+            cached_jvm = jvm;
+        }
+    }
+    
+    if (cached_jvm == NULL)
+    {
+        NSLog(@"JavaVM is NULL");
+    }
+    else
+    {
+        (*cached_jvm)->GetEnv(cached_jvm,
+                              (void **)&env,
+                              JNI_VERSION_1_2);
+    }
+    return env;
+}
+
+
 @implementation StatusItemWrapper : NSObject
 
 
@@ -101,15 +133,6 @@
 	return [_statusItem toolTip];
 }
 
-- (void)setIsArmed:(BOOL)armedState
-{
-}
-
-- (BOOL)isArmed
-{
-    return false;
-}
-
 - (void)itemSelected:(id) sender
 {
     static jmethodID mid;
@@ -147,12 +170,6 @@
         }
     }
 
-}
-
-- (NSRect)globalFrame
-{
-    NSRect globalFrame = NSMakeRect(0, 0, 0, 0);
-    return globalFrame;
 }
 
 - (void)setJavaPeer:(jobject) peer

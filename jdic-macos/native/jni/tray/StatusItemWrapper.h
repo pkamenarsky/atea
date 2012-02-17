@@ -29,7 +29,6 @@
 
 #import <jni.h>
 #import <Cocoa/Cocoa.h>
-#import "StatusItemView.h"
 
 
 
@@ -51,9 +50,6 @@
 - (NSString*)labelText;
 - (void)setToolTip:(NSString*)toolTip;
 - (NSString*)toolTip;
-- (void)setIsArmed:(BOOL)armedState;
-- (BOOL)isArmed;
-- (NSRect)globalFrame;
 
 - (void)setJavaPeer:(jobject) peer;
 - (jobject)javaPeer;

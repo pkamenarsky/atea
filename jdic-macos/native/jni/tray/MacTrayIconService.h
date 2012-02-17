@@ -73,29 +73,14 @@ JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconServ
 (JNIEnv *env, jobject this, jlong nsStatusItemPtr);
 
 
-/*
- * Class:     _Included_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService
- * Method:    setIsArmedNative
- * Signature: (JZ)V
- */
-JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_setIsArmedNative
-(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jboolean state);
+JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_addItemNative
+(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jstring item, jint index, jint tag, jboolean enabled);
 
 
-/*
- * Class:     _Included_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService
- * Method:    getLocationOnScreenNative
- * Signature: (J[F)V
- */
-JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_getLocationOnScreenNative
-(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jfloatArray framePoints);
-
-
-
-
-
-
-
+JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_removeItemNative
+(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jint index);
+    
+    
 #ifdef __cplusplus
 }
 #endif

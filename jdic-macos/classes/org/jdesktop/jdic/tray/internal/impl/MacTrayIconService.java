@@ -48,9 +48,10 @@ import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
 import java.awt.image.WritableRaster;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.ArrayList;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -72,62 +73,23 @@ import javax.swing.event.PopupMenuListener;
 
 public class MacTrayIconService 
 {
-
-    private JPopupMenu menu;
     private Icon icon;
 	private boolean isTemplate;
-    private boolean autoSize;
     private String caption; //on the mac, this is the title(label) of the Status Item(Tray Icon)
     private String toolTipText;
 
-    private long nsStatusItemWrapperPointer; //a C-pointer to the native NSStatusItemWrapper peer
-    static private HashMap map = new HashMap();
+	private int tag;
+	private int itemCount;
 
-    private LinkedList actionList = new LinkedList();
+	private ArrayList<Integer> itemTags = new ArrayList<Integer>();
+	private Map<Integer, ActionListener> listenerMap = new HashMap<Integer, ActionListener>();
+
+    private long nsStatusItemWrapperPointer; //a C-pointer to the native NSStatusItemWrapper peer
 
     private final int MAC_STATUSBAR_ICON_WIDTH = 22; //the Status bar on the Mac is 22 points tall
     private final int MAC_STATUSBAR_ICON_HEIGHT = 22;
 
     private boolean nativePeerExists = false;
-    private boolean showingPopoup;
-
-    AnimationObserver observer;
-
-    static class PopupParent extends JDialog
-    {
-        public PopupParent()
-        {
-            super((Frame) null, "JDIC Tray Icon");
-            try
-            {
-                Method setAlwaysOnTop = this.getClass().getMethod("setAlwaysOnTop", new Class[]{boolean.class});
-                setAlwaysOnTop.invoke(this, new Object[]{Boolean.TRUE});
-            }
-            catch (NoSuchMethodException e)
-            {
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-            this.setUndecorated(true);
-            this.setBounds(0, 0, 0, 0);
-        }
-    }
-
-    static PopupParent popupParentFrame;
-
-
-    public MacTrayIconService()
-    {
-        if (popupParentFrame == null)
-        {
-            popupParentFrame = new PopupParent();
-            popupParentFrame.pack();
-            popupParentFrame.setVisible(true);
-        }
-    }
-
 
     private native long createStatusItem(); //creates, AND also adds the new StatusItem to the status bar
 
@@ -141,18 +103,9 @@ public class MacTrayIconService
 
     private native void setToolTipNative(long nsStatusItemPtr, String toolTipText);
 
-    private native void addItemNative(long nsStatusItemPtr, String item, int index);
-
-    private native void setIsArmedNative(long nsStatusItemPtr, boolean state);//control highlight of item in status bar
-
-
-    /**
-     * @param nsStatusItemPtr
-     * @param framePoints     a 4 element float array. After the call returns, the array contains the frame rect points of
-     *                        the StatusItem's view (TrayIcon view) as originX, originY, width, height, in global screen coordinates
-     */
-    private native void getLocationOnScreenNative(long nsStatusItemPtr, float[] framePoints);
-
+    private native void addItemNative(long nsStatusItemPtr, String item, int index, int tag, boolean enabled);
+	
+    private native void removeItemNative(long nsStatusItemPtr, int index);
 
     /**
      * Not implementd on the Mac
@@ -161,11 +114,6 @@ public class MacTrayIconService
      * @param text
      * @param type
      */
-    public void showBalloonMessage(String caption, String text, int type)
-    {
-        //this is currently a no-op on the Mac
-    	throw new UnsupportedOperationException("Method showBalloonMessage is unsupported under Mac!");
-    }
 
     public void addNotify()
     {
@@ -202,7 +150,6 @@ public class MacTrayIconService
         }
     }
 
-
     void updateIcon()
     {
         if (icon != null)
@@ -212,7 +159,7 @@ public class MacTrayIconService
 					icon.getIconHeight(), BufferedImage.TYPE_4BYTE_ABGR);
 			g = (Graphics2D) ((BufferedImage) iconImage).getGraphics();
 			g.setComposite(AlphaComposite.Src);
-			icon.paintIcon(observer, g, 0, 0);
+			icon.paintIcon(null, g, 0, 0);
 			
             WritableRaster wr = iconImage.getRaster();
             DataBuffer db = wr.getDataBuffer();
@@ -248,183 +195,10 @@ public class MacTrayIconService
         }
     }
 
-
-    private void temp()
-    {
-
-        // here is the data I need to supply to create an NSBitmapImageRep in
-		// the native Mac code:
-        /*
-		 * bmrep = [bmrep initWithBitmapDataPlanes:&image->buffer_ptr
-		 * pixelsWide:(GLint) image->buffer_size.width pixelsHigh:(GLint)
-		 * image->buffer_size.height bitsPerSample:8 samplesPerPixel:4
-		 * hasAlpha:YES isPlanar:NO colorSpaceName:NSCalibratedRGBColorSpace
-		 * bytesPerRow:image->buffer_size.width*4 bitsPerPixel:32];
-		 * 
-		 * assume we can start from a BufferedImage named bi, into which our
-		 * Icon has been drawn. planes - the data buffer pixelsWide - width of
-		 * data in pixels pixelsHigh - height of data in pixels
-		 */
-        Graphics2D g;
-        Image iconImage = null;
-        if (icon != null)
-        {
-            if (iconImage == null)
-            {
-                iconImage = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-                g = (Graphics2D) ((BufferedImage) iconImage).getGraphics();
-                g.setComposite(AlphaComposite.Src);
-                icon.paintIcon(null, g, 0, 0);
-                BufferedImage bi = (BufferedImage) iconImage; //for casting
-                System.out.println("type of BufferedImage is " + iconImage.getClass().getName());
-                System.out.println("width of image is " + bi.getWidth());
-                System.out.println("height of image is " + bi.getHeight());
-
-                Raster r = bi.getData();
-                System.out.println("bi.getDate() : type of the Raster is " + r.getClass().getName());
-                DataBuffer db = r.getDataBuffer();
-                System.out.println("type of the DataBuffer is " + db.getClass().getName());
-                int pixels[] = ((DataBufferInt) db).getData();
-                System.out.println("size of pixel array is " + pixels.length);
-
-                System.out.println("");
-                WritableRaster wr = bi.getRaster();
-                System.out.println("bi.getRaster() : type of the Raster is " + wr.getClass().getName());
-                DataBuffer db2 = wr.getDataBuffer();
-                System.out.println("type of DataBuffer is " + db2.getClass().getName());
-
-                pixels = ((DataBufferInt) db2).getData();
-                System.out.println("size of pixel array is " + pixels.length);
-                System.out.println("raster bouds is " + wr.getBounds());
-                System.out.println("raster width=" + wr.getWidth() + ", height=" + wr.getHeight());
-                System.out.println("raster minX=" + wr.getMinX() + ", minY=" + wr.getMinY());
-                System.out.println("raster number bands (samples per pixel)=" + wr.getNumBands());
-                System.out.println("raster num data elements =" + wr.getNumDataElements());
-                System.out.println("");
-                int imageWidth = wr.getWidth();
-                int imageHeight = wr.getHeight();
-                int samplesPerPixel = wr.getNumBands();
-                int bitsPerSample = 8;
-                boolean hasAlpha = true;
-                boolean isPlanar = false;
-                String colorSpaceName = "NSCalibratedRGBColorSpace"; //if doesn't work try NSDeviceRGBColorSpace
-                int bytesPerRow = imageWidth * samplesPerPixel;
-                int bitsPerPixel = samplesPerPixel * bitsPerSample;
-
-                SampleModel sm = bi.getSampleModel();
-                System.out.println("type of the SampleModel is " + sm.getClass().getName());
-                int[] sampleSize = sm.getSampleSize();
-                System.out.println("length of sample size array is " + sampleSize.length);
-                System.out.println("samples are :");
-                for (int i = 0; i < sampleSize.length; i++)
-                {
-                    int i1 = sampleSize[i];
-                    System.out.print("" + i + ": " + i1 + ", ");
-                }
-                System.out.println("");
-                if (sm.getClass() == SinglePixelPackedSampleModel.class)
-                {
-                    System.out.println("scanline stride is " + ((SinglePixelPackedSampleModel) sm).getScanlineStride());
-                }
-
-            }
-        }
-    }
-
-
-
-    //sets showingPopup to state, and calls native peer to set the state of the TrayIcon to be highlighted or unhighlighted
-    private void setIsArmed(boolean state)
-    {
-        showingPopoup = state;
-        if (nativePeerExists)
-        {
-            setIsArmedNative(nsStatusItemWrapperPointer, state);
-        }
-    }
-
-    public void setPopupMenu(JPopupMenu m)
-    {
-        menu = m;
-        if (menu != null)
-        {
-            menu.setLightWeightPopupEnabled(false);
-
-            menu.addPopupMenuListener(new PopupMenuListener()
-            {
-                public void popupMenuWillBecomeVisible(PopupMenuEvent e)
-                {
-                }
-
-                public void popupMenuWillBecomeInvisible(PopupMenuEvent e)
-                {
-                    setIsArmed(false);
-                }
-
-                public void popupMenuCanceled(PopupMenuEvent e)
-                {
-                    setIsArmed(false);
-                }
-            });
-
-            // in jdk1.4, the popup menu is still visible after the invoker window lost focus.
-            popupParentFrame.addWindowFocusListener(new WindowFocusListener()
-            {
-                public void windowGainedFocus(WindowEvent e)
-                {
-                }
-
-                public void windowLostFocus(WindowEvent e)
-                {
-                    menu.setVisible(false);
-
-                }
-            });
-
-        }
-    }
-
-    public void processEvent(int mouseState, int x, int y)
-    {
-
-    }
-
-    public synchronized static void notifyEvent(int id, final int mouseState, final int x, final int y)
-    {
-        final MacTrayIconService instance = (MacTrayIconService) map.get(new Integer(id));
-        if (instance == null)
-        {
-            return;
-        }
-        try
-        {
-            EventQueue.invokeLater(new Runnable()
-            {
-                public void run()
-                {
-                    instance.processEvent(mouseState, x, y);
-                }
-            });
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-
     public void setIcon(final Icon i, final boolean isTemplate) {
 		icon = i;
 		this.isTemplate = isTemplate;
-		if (observer != null) {
-			observer.setUpdate(false);
-			observer = null;
-		}
-		observer = new AnimationObserver();
-		if (icon instanceof ImageIcon) {
-			observer = new AnimationObserver();
-			((ImageIcon) icon).setImageObserver(observer);
-		}
+
 		updateIcon();
 	}
 
@@ -461,43 +235,46 @@ public class MacTrayIconService
         }
     }
 
-	public void addItem(String item, int index)
+	public void addItem(String item, int index, ActionListener listener)
 	{
 		if (nativePeerExists)
 		{
-			addItemNative(nsStatusItemWrapperPointer, item, index);
+			if (index <= itemTags.size())
+			{
+				if (index == itemTags.size()) {
+					itemCount = itemTags.size() + 1;
+				}
+
+				itemTags.add(index, tag);
+				listenerMap.put(tag, listener);
+
+				addItemNative(nsStatusItemWrapperPointer, item, index, tag++, listener != null);
+			}
+			else
+				throw new IllegalArgumentException("Illegal index " + index);
 		}
 	}
 
-    public void setIconAutoSize(boolean b)
-    {
-        autoSize = b;
+	public void addItem(String item, ActionListener listener) {
+		addItem(item, itemCount, listener);
+	}
 
-    }
+	public void removeItem(int index)
+	{
+		if (nativePeerExists)
+		{
+			if (index < itemTags.size()) {
+				removeItemNative(nsStatusItemWrapperPointer, index);
 
-    public void addActionListener(ActionListener l)
-    {
-        actionList.add(l);
-    }
+				listenerMap.remove(itemTags.get(index));
+				itemTags.remove(index);
 
-    public void removeActionListener(ActionListener l)
-    {
-        actionList.remove(l);
-    }
-
-    public Point getLocationOnScreen()
-    {
-        Point location = null;
-        if (nativePeerExists)
-        {
-            float[] buf = new float[4];
-            //native method copies in originX, originY, width, height into buf
-            getLocationOnScreenNative(nsStatusItemWrapperPointer, buf);
-            location = new Point((int) buf[0], (int) buf[1]);
-            //System.out.println("getLocationOnScreen: x="+buf[0]+", y="+buf[1]+", width="+buf[2]+", height="+buf[3]);
-        }
-        return location;
-    }
+				itemCount--;
+			}
+			else
+				throw new IllegalArgumentException("No menu item at index " + index);
+		}
+	}
 
     void remove()
     {
@@ -520,9 +297,6 @@ public class MacTrayIconService
     }
 
     private synchronized void removeImpl() {
-		if (observer != null) {
-			observer.setUpdate(false);
-		}
 		if (nativePeerExists) {
 			// remove native status item from native status bar
 			removeStatusItem(nsStatusItemWrapperPointer);
@@ -531,109 +305,12 @@ public class MacTrayIconService
 		}
 	}
 
-
-    public void addBalloonActionListener(ActionListener al)
-    {
-
-    }
-
-    public void removeBalloonActionListener(ActionListener al)
-    {
-
-    }
-
-
-	void itemSelectedCallback(int index) {
-		System.out.println("OH YES BABY");
-	}
-
-    /**
-     * Called from JNI when a mouse event has occured in the TrayIcon. This will be on the AWT-AppKit thread, NOT
-     * the EDT, so when procesing from this method make sure any events you sent posted are on the EDT thread otherwise a
-     * deadlock may occurr
-     *
-     * @param eventName
-     * @param mouseX    the x location of the mosue event in global screen coordinates
-     * @param mouseY    the y location of the mouse event in global screen coordinates
-     * @param itemX     the x-coordinate of the NSStatusItem's view, in global screen coordinates.
-     */
-    void mouseEventCallback(String eventName, final float mouseX, final float mouseY, final float itemX)
-    {
-        if ("rightMouseDown".equals(eventName) || "mouseDown".equals(eventName))
-        {
-            if (menu != null)
-            {
-                if (showingPopoup)
-                {
-                    //if already showing the popup, toggle the state, ie, hide it
-                    Runnable r = new Runnable()
-                    {
-                        public void run()
-                        {
-                            menu.setVisible(false);
-                        }
-                    };
-                    SwingUtilities.invokeLater(r);
-                    return;
-                }
-
-                if (!actionList.isEmpty() && "mouseDown".equals(eventName))
-                {
-                    //there are registered action listeners for the mouse-down. So instead of showing the popup, we
-                    //notify the listeners
-                    Runnable r = new Runnable()
-                    {
-                        public void run()
-                        {
-                            Iterator itar = actionList.iterator();
-                            while (itar.hasNext())
-                            {
-                                ActionListener al = (ActionListener) itar.next();
-                                al.actionPerformed(new ActionEvent(MacTrayIconService.this,
-                                                                   ActionEvent.ACTION_PERFORMED, "PressAction"));
-                            }
-                        }
-                    };
-
-                    SwingUtilities.invokeLater(r);
-                    return;
-                }
-
-                //final Point p = new Point((int)mouseX, (int)mouseY);
-                Runnable r = new Runnable()
-                {
-                    public void run()
-                    {
-                        popupParentFrame.pack();
-                        popupParentFrame.setVisible(true);
-                        menu.show(popupParentFrame.getContentPane(), (int) itemX, MAC_STATUSBAR_ICON_HEIGHT);
-                        menu.requestFocus();
-                        popupParentFrame.toFront();
-                        setIsArmed(true);
-                    }
-                };
-                SwingUtilities.invokeLater(r);
-            }
-        }
-    }
-
-    private class AnimationObserver extends Component implements ImageObserver {
-		boolean update = true;
-
-		public void setUpdate(boolean b) {
-			update = b;
-		}
-
-		public boolean imageUpdate(Image img, int infoflags, int x, int y,
-				int width, int height) {
-			if (update
-					&& (((infoflags & ALLBITS) != 0) || ((infoflags & FRAMEBITS) != 0))) {
-				updateIcon();
-			}
-			return update;
+	void itemSelectedCallback(int tag) {
+		if (listenerMap.containsKey(tag))
+		{
+			listenerMap.get(tag).actionPerformed(new ActionEvent(this, tag, "itemSelected"));
 		}
 	}
-
 
     // test method
     private void showThreads()

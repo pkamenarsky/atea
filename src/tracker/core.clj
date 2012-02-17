@@ -117,14 +117,21 @@
 
 ; Native -------------------------------------------------------------------
 
+(defn action [f]
+  (reify java.awt.event.ActionListener 
+    (actionPerformed 
+      [this event] (f))))
+
 (defn test-native []
   (let [tray (MacSystemTrayService/getInstance)
         icon (MacTrayIconService.)]
     ;(.setCaption icon "test")
     (.setIcon icon (javax.swing.ImageIcon. (load-icon "resources/clock.png")))
     (.addTrayIcon tray icon 0)
-    (.addItem icon "asdad" 0)
-    (.addItem icon "sfgs543lfgn ldfldksf s" 0)
-    (.addItem icon "sefhsdkf jdsk fldsfk ljsdfl hs" 0)
-    (.addItem icon "adfdskfjdsf kdsf ldsj" 0)))
+    (.addItem icon "asdad" 0 nil)
+    (.addItem icon "sfgs543lfgn ldfldksf s" 0 nil)
+    (.addItem icon "sefhsdkf jdsk fldsfk ljsdfl hs" 0 (action #(println "kakakak")))
+    (.addItem icon "adfdskfjdsf kdsf ldsj" 0 nil)
+    (.addItem icon "-" 1 nil)
+    (.removeItem icon 1)))
 

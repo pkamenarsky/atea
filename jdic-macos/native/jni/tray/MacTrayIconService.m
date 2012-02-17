@@ -75,8 +75,6 @@ JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconServ
     [pool release];
 }
 
-
-
 JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_removeStatusItem
 (JNIEnv *env, jobject this, jlong nsStatusItemPtr)
 {
@@ -92,50 +90,8 @@ JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconServ
 }
 
 
-JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_setIsArmedNative
-(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jboolean state)
-{
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-    StatusItemWrapper *theItem;
-    theItem = (id) ((uintptr_t)nsStatusItemPtr);
-
-    if (state == 0)
-    {
-        [theItem setIsArmed:NO];
-    }
-    else
-    {
-
-       [theItem setIsArmed:YES];
-    }
-    [pool release];
-}
-
-JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_getLocationOnScreenNative
-(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jfloatArray framePoints)
-{
-
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-    StatusItemWrapper *theItem;
-    theItem = (id) ((uintptr_t)nsStatusItemPtr);
-
-    NSRect frameRect = [theItem globalFrame];
-    jfloat buf[4];
-    buf[0] = frameRect.origin.x;
-    buf[1] = frameRect.origin.y;
-    buf[2] = frameRect.size.width;
-    buf[3] = frameRect.size.height;
-    //copy local values to elements of the argument array
-    (*env)->SetFloatArrayRegion(env, framePoints, 0, 4, buf);
-
-
-    [pool release];
-}
-
 JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_addItemNative
-(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jstring item, jint index)
+(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jstring item, jint index, jint tag, jboolean enabled)
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     
@@ -143,15 +99,33 @@ JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconServ
     StatusItemWrapper *theItem;
     theItem = (id) ((uintptr_t)nsStatusItemPtr);
 
-    
     NSString *nsItem = ConvertToNSString(env, item);
-    NSMenuItem *nsMenuItem = [[NSMenuItem alloc] initWithTitle:nsItem action:@selector(itemSelected:) keyEquivalent:@""];
-    [nsMenuItem setTarget:theItem];
-    [nsMenuItem setTag:index];
+    NSMenuItem *nsMenuItem = [nsItem isEqualToString:@"-"] ?
+        [NSMenuItem separatorItem] :
+        [[NSMenuItem alloc] initWithTitle:nsItem action:@selector(itemSelected:) keyEquivalent:@""];
     
-    //[[theItem menu] addItem:nsMenuItem];
-    [[theItem menu] performSelectorOnMainThread:@selector(addItem:) withObject:nsMenuItem waitUntilDone:NO];  
+    if (enabled)
+    {
+        [nsMenuItem setTarget:theItem];
+        [nsMenuItem setTag:tag];
+    }
+            
+    [[theItem menu] insertItem:nsMenuItem atIndex:index];
 
+    [pool release];
+}
+
+
+JNIEXPORT void JNICALL Java_org_jdesktop_jdic_tray_internal_impl_MacTrayIconService_removeItemNative
+(JNIEnv *env, jobject this, jlong nsStatusItemPtr, jint index)
+{
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    //NSLog(@"In the native setTitleNative method");
+    StatusItemWrapper *theItem;
+    theItem = (id) ((uintptr_t)nsStatusItemPtr);
+    
+    [[theItem menu] removeItemAtIndex:index];
     [pool release];
 }
 
