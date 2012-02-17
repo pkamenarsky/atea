@@ -20,6 +20,14 @@
 
 ; Item management ----------------------------------------------------------
 
+(defn parition-items [items]
+  ; first group by priority into a {pri item} map,
+  ; then partation the first 10 items of every priority by project
+  (reduce (fn [a [pri item]]
+            (assoc a pri (partition-by :project (take 10 item))))
+          {}
+          (group-by :priority items)))
+
 (defn update-items [bug-id menu items]
   (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
   (if bug-id
@@ -40,14 +48,20 @@
 
 ; IO -----------------------------------------------------------------------
 
+(defn maybe-int [string]
+  (try
+    (Integer. string)
+    (catch Exception e string)))
+
 (defn parse-bug [bugs [number line]]
   (if (re-matches #"[^#\s].*" line) 
-    (conj bugs
-      (into {:number number}
-            (zipmap
-              [:priority :project :description]
-              (string/split line #"\s+" 3)))
-      )
+    (conj bugs 
+          (into {:number number}
+                (update-in 
+                  (zipmap
+                    [:priority :project :description]
+                    (string/split line #"\s+" 3))
+                  [:priority] maybe-int)))   ; convert :priority to int
     bugs))
 
 (defn write-bug [bug]
