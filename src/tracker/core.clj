@@ -41,13 +41,13 @@
 ; IO -----------------------------------------------------------------------
 
 (defn parse-bug [bugs [number line]]
-  (if (re-matches #"\S.*" line)
-    (cons 
+  (if (re-matches #"[^#\s].*" line) 
+    (conj bugs
       (into {:number number}
             (zipmap
               [:priority :project :description]
               (string/split line #"\s+" 3)))
-      bugs)
+      )
     bugs))
 
 (defn write-bug [bug]
@@ -62,9 +62,8 @@
   (with-open [rdr (java.io.BufferedReader. 
                     (java.io.FileReader. file))]
     (let [lines (vec (line-seq rdr))]
-      (doall
-        {:lines lines
-         :bugs (vec (reduce parse-bug [] (zipmap (range (count lines)) lines)))}))))
+      {:lines lines
+       :bugs (reduce parse-bug [] (map vector (range (count lines)) lines))})))
 
 (defn write-bugs [file bugs]
   (with-open [wtr (java.io.BufferedWriter.
