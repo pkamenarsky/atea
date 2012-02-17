@@ -28,7 +28,7 @@
           {}
           (group-by :priority items)))
 
-(defn update-items [bug-id menu items activate-fn]
+(defn update-items [bug-id menu items actfn deactfn]
   ; project / priority section functions
   (let [add-section
         (fn [add-sep? title sec-items]
@@ -44,8 +44,8 @@
                 (str "➡ " (:description item))  ;◆✦●
                 (:description item)) 
               (action #(do
-                         (activate-fn item)
-                         (update-items (:number item) menu items activate-fn))))))
+                         (actfn (assoc item :since (.getTime (java.util.Date.))))
+                         (update-items (:number item) menu items actfn deactfn))))))
 
         add-priority
         (fn [add-sep? priority prjs]
@@ -64,7 +64,9 @@
         (.addItem
           menu
           "[00:16] - stop working"
-          (action #(update-items nil menu items activate-fn))) 
+          (action #(do
+                     (deactfn)
+                     (update-items nil menu items actfn deactfn)))) 
         (.addSeparator menu))) 
 
     ; add items sorted by priority and project
@@ -74,29 +76,28 @@
 
 ; IO -----------------------------------------------------------------------
 
-(defn maybe-int [string]
+(defn maybe-int [string v]
   (try
     (Integer. string)
-    (catch Exception e 999)))
+    (catch Exception e v)))
 
 (defn parse-bug [bugs [number line]]
   (if (re-matches #"[^#\s].*" line) 
     (conj bugs 
-          (into {:number number}
-                (update-in 
-                  (zipmap
-                    [:priority :project :description]
-                    (string/split line #"\s+" 3))
-                  [:priority] maybe-int)))   ; convert :priority to int
+          (let [tokens (string/split line #"\s+" 4)
+                t (maybe-int (tokens 2) nil)]
+            {:number number
+             :priority (maybe-int (tokens 0) 999)
+             :project (tokens 1)
+             :time (if t t 0)
+             :description (if t
+                            (tokens 3)
+                            ; if no time given, desc is 2nd token
+                            ((string/split line #"\s+" 3) 2))}))
     bugs))
 
 (defn write-bug [bug]
-  (apply
-    str
-    (interpose "\t\t" (reduce
-                        #(conj % (get bug %2))
-                        []
-                        [:priority :project :description]))))
+  (apply format "%s\t%s\t%s\t%s" (map bug [:priority :project :time :description])))
 
 (defn load-bugs [file]
   (with-open [rdr (java.io.BufferedReader. 
@@ -105,10 +106,11 @@
       {:lines lines
        :bugs (reduce parse-bug [] (map vector (range (count lines)) lines))})))
 
-(defn write-bugs [file bugs]
+(defn write-bugs [file bugs actbug]
   (with-open [wtr (java.io.BufferedWriter.
                     (java.io.FileWriter. file))]
-    (doseq [line (:lines bugs)] (.write	wtr (str line "\n")))))
+    (doseq [line (:lines bugs)] (.write wtr (str line "\n")))
+    (.write wtr (str "\n\n# Working on \"" (:description actbug) "\" in " (:project actbug) " since " (:since actbug)))))
 
 (defn update-bug [bugs id k v]
   (let [bug (assoc (get-in bugs [:bugs id]) k v)]
@@ -116,6 +118,9 @@
     (-> bugs
       (assoc-in [:bugs id] bug)
       (assoc-in [:lines (:number bug)] (write-bug bug)))))
+
+(defn update-line [bugs bug]
+  (assoc-in bugs [:lines (:number bug)] (write-bug bug)))
 
 ; Track file updates -------------------------------------------------------
 
@@ -140,13 +145,16 @@
         active-item (atom nil)
         icon (load-icon "resources/clock.png")
         menu (create-menu)]
-    (.setActionListener menu (action #()))
     (.addTrayIcon (get-tray) menu 0)
     (.setIcon menu icon)
-    (watch-file
-      "tracker.txt"
-      1000
-      #(do
-         (reset! bugs (load-bugs "tracker.txt"))
-         (update-items nil menu (:bugs @bugs) (partial reset! active-item))))))
+    (.setActionListener
+      menu
+      (action #(do
+                 (reset! bugs (load-bugs "tracker.txt"))
+                 (update-items nil menu (:bugs @bugs)
+                               (fn [actbug]
+                                 (reset! active-item actbug)
+                                 (swap! bugs update-line actbug)
+                                 (write-bugs "tracker-out.txt" @bugs actbug)) 
+                               (fn [])))))))
 
