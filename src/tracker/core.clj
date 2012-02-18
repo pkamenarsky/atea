@@ -20,6 +20,15 @@
 
 ; Item management ----------------------------------------------------------
 
+(defn now []
+  (.getTime (java.util.Date.)))
+
+(defn to-mins [msec]
+  (quot msec 1000))
+
+(defn to-str [mins]
+  (format "[%02d:%02d]" (quot mins 60) (mod mins 60)))
+
 (defn parition-items [items]
   ; first group by priority into a {pri item} map,
   ; then group the first 10 items of every priority by project
@@ -43,7 +52,7 @@
               (if (= (get-in items [:active :number]) (:number item))
                 (str "➡ " (:description item))  ;◆✦●
                 (:description item)) 
-              (action #(actfn (assoc item :since (.getTime (java.util.Date.))))))))
+              (action #(actfn (assoc item :since (now)))))))
 
         add-priority
         (fn [add-sep? priority prjs]
@@ -58,11 +67,16 @@
 
     ; add "now working" section
     (when (:active items)
-      (do
+      (let [stime (to-mins (- (now) (get-in items [:active :since])))]
         (.addItem
           menu
-          "[00:16] - stop working"
-          (action #(deactfn))) 
+          (str "Session: "
+               (to-str stime)
+               " - Sum: "
+               (to-str (+ (get-in items [:active :time]) stime)))
+          nil) 
+        (.addSeparator menu)
+        (.addItem menu "Stop work" (action #(deactfn)))
         (.addSeparator menu))) 
 
     ; add items sorted by priority and project
@@ -120,19 +134,31 @@
                                (= (:project %) (active-match 2)))
                           (into % {:since (Long. (active-match 3))})) bugs))})))
 
-(defn write-bugs [file bugs active]
+(defn write-bugs [file bugs new-active]
   (with-open [wtr (java.io.BufferedWriter.
                     (java.io.FileWriter. file))]
-    (let [lines (if active
-                  (assoc (:lines bugs) (:number active) (write-bug active))
+
+    ; add elapsed time to old active bug and update its associated line
+    (let [old-active (:active bugs)
+          a (println "old active time: " (:time old-active))
+          lines (if old-active
+                  (assoc
+                    (:lines bugs)
+                    (:number old-active)
+                    (write-bug (update-in
+                                 old-active
+                                 [:time]
+                                 #(+ % (to-mins (- (now) (:since old-active)))))))
                   (:lines bugs))]
       (doseq [line lines] (.write wtr (str line "\n"))) 
-      (when active
+
+      ; write out new active bug
+      (when new-active
         (.write wtr (format
                       "\n\n# Working on \"%s\" in \"%s\" since %d"
-                      (:description active)
-                      (:project active) 
-                      (:since active)))))))
+                      (:description new-active)
+                      (:project new-active) 
+                      (:since new-active)))))))
 
 ; Track file updates -------------------------------------------------------
 
@@ -160,6 +186,7 @@
     (.setActionListener
       menu
       (action #(let [bugs (load-bugs "tracker.txt")]
+                 (println "active: " (:active bugs))
                  (update-items menu bugs
                                (fn [active] (write-bugs "tracker.txt" bugs active)) 
                                (fn [] (write-bugs "tracker.txt" bugs nil))))))))
