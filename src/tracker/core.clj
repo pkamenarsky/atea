@@ -111,8 +111,15 @@
 (defn drop-last-elems [pred coll]
   (reverse (drop-while pred (reverse coll))))
 
+(defn pad-tabs [s n]
+  (str s (apply str (repeat (- n (quot (count s) n)) "\t"))))
+
 (defn write-bug [bug]
-  (apply format "%s\t%s\t%s\t%s" (map bug [:priority :project :time :description])))
+  (format "%s\t%s\t%s\t%s"
+          (pad-tabs (:priority bug) 1) 
+          (pad-tabs (:project bug) 3)
+          (pad-tabs (str (:time bug)) 2) 
+          (:description bug)))
 
 (defn load-bugs [file]
   (try 
