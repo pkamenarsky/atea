@@ -200,7 +200,8 @@
       menu
       (action #(let [file (:file (load-cfg))
                      bugs (load-bugs file)]
-                 (update-items menu bugs
-                               (fn [active] (write-bugs file bugs active)) 
-                               (fn [] (write-bugs file bugs nil))))))))
+                 (when bugs
+                   (update-items menu bugs
+                                 (fn [active] (write-bugs file bugs active)) 
+                                 (fn [] (write-bugs file bugs nil)))))))))
 
