@@ -112,13 +112,13 @@
   (reverse (drop-while pred (reverse coll))))
 
 (defn pad-tabs [s n]
-  (str s (apply str (repeat (- n (quot (count s) n)) "\t"))))
+  (str s (apply str (repeat (- n (quot (count s) 4)) "\t"))))
 
 (defn write-bug [bug]
   (format "%s\t%s\t%s\t%s"
           (:priority bug)
-          (pad-tabs (:project bug) 3)
-          (pad-tabs (str (:time bug)) 2) 
+          (pad-tabs (:project bug) 2)
+          (pad-tabs (str (:time bug)) 1) 
           (:description bug)))
 
 (defn load-bugs [file]
