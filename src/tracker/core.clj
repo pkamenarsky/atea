@@ -115,9 +115,8 @@
   (apply format "%s\t%s\t%s\t%s" (map bug [:priority :project :time :description])))
 
 (defn load-bugs [file]
-  (with-open [rdr (java.io.BufferedReader. 
-                    (java.io.FileReader. file))]
-    (let [lines (line-seq rdr)
+  (try 
+    (let [lines (string/split-lines (slurp file))
           bugs (reduce parse-bug [] (map vector (range (count lines)) lines))
           active-match (some (partial re-matches status-re) lines)]
  
@@ -132,12 +131,11 @@
                  (some #(when
                           (and (= (:description %) (active-match 1))
                                (= (:project %) (active-match 2)))
-                          (into % {:since (Long. (active-match 3))})) bugs))})))
+                          (into % {:since (Long. (active-match 3))})) bugs))})
+    (catch Exception e nil)))
 
 (defn write-bugs [file bugs new-active]
-  (with-open [wtr (java.io.BufferedWriter.
-                    (java.io.FileWriter. file))]
-
+  (try
     ; add elapsed time to old active bug and update its associated line
     (let [old-active (:active bugs)
           a (println "old active time: " (:time old-active))
@@ -150,15 +148,16 @@
                                  [:time]
                                  #(+ % (to-mins (- (now) (:since old-active)))))))
                   (:lines bugs))]
-      (doseq [line lines] (.write wtr (str line "\n"))) 
 
-      ; write out new active bug
-      (when new-active
-        (.write wtr (format
-                      "\n\n# Working on \"%s\" in \"%s\" since %d"
-                      (:description new-active)
-                      (:project new-active) 
-                      (:since new-active)))))))
+      ; write out new lines & new active bug
+      (spit file (string/join "\n" (if new-active
+                                     (conj lines
+                                           (format
+                                             "\n\n# Working on \"%s\" in \"%s\" since %d"
+                                             (:description new-active)
+                                             (:project new-active) 
+                                             (:since new-active)))
+                                     lines))))))
 
 ; Track file updates -------------------------------------------------------
 
