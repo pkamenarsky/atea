@@ -205,6 +205,10 @@ public class MacTrayIconService
     }
 
     public void setIcon(final Icon i, final boolean isTemplate) {
+
+		if (i == null)
+			throw new IllegalArgumentException("icon == null"); 
+
 		icon = i;
 		this.isTemplate = isTemplate;
 
@@ -223,6 +227,9 @@ public class MacTrayIconService
 	 */
     public void setCaption(String labelText)
     {
+		if (labelText == null)
+			throw new IllegalArgumentException("caption == null");
+
         caption = labelText;
         if (nativePeerExists)
         {
@@ -246,6 +253,9 @@ public class MacTrayIconService
 
 	public void addItem(String item, int index, ActionListener listener)
 	{
+		if (item == null)
+			throw new IllegalArgumentException("item == null");
+
 		if (nativePeerExists)
 		{
 			if (index <= itemTags.size())
