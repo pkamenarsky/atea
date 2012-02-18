@@ -178,6 +178,19 @@
 
 ; main ---------------------------------------------------------------------
 
+(def default-cfg {:file "tracker.txt"})
+
+(defn write-default-cfg []
+  (spit ".kali" (pr-str default-cfg)))
+
+(defn load-cfg []
+  (try
+    (load-file ".kali")
+    (catch Exception e
+      (do
+        (write-default-cfg)
+        default-cfg))))
+
 (defn main []
   (let [icon (load-icon "resources/clock.png")
         menu (create-menu)]
@@ -185,9 +198,9 @@
     (.setIcon menu icon)
     (.setActionListener
       menu
-      (action #(let [bugs (load-bugs "tracker.txt")]
-                 (println "active: " (:active bugs))
+      (action #(let [file (:file (load-cfg))
+                     bugs (load-bugs file)]
                  (update-items menu bugs
-                               (fn [active] (write-bugs "tracker.txt" bugs active)) 
-                               (fn [] (write-bugs "tracker.txt" bugs nil))))))))
+                               (fn [active] (write-bugs file bugs active)) 
+                               (fn [] (write-bugs file bugs nil))))))))
 
