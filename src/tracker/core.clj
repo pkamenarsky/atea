@@ -116,7 +116,7 @@
 
 (defn write-bug [bug]
   (format "%s\t%s\t%s\t%s"
-          (pad-tabs (:priority bug) 1) 
+          (:priority bug)
           (pad-tabs (:project bug) 3)
           (pad-tabs (str (:time bug)) 2) 
           (:description bug)))
@@ -145,7 +145,6 @@
   (try
     ; add elapsed time to old active bug and update its associated line
     (let [old-active (:active bugs)
-          a (println "old active time: " (:time old-active))
           lines (if old-active
                   (assoc
                     (:lines bugs)
@@ -198,7 +197,8 @@
         default-cfg))))
 
 (defn main []
-  (let [icon (load-icon "resources/clock.png")
+  (let [old-file (atom nil)
+        icon (load-icon "resources/clock.png")
         menu (create-menu)]
     (.addTrayIcon (get-tray) menu 0)
     (.setIcon menu icon)
@@ -206,7 +206,14 @@
       menu
       (action #(let [file (:file (load-cfg))
                      bugs (load-bugs file)]
+
+                 ; if file *name* changed, write out old one first
+                 (when (and @old-file (not= @old-file file))
+                   (write-bugs @old-file (load-bugs @old-file) nil))
+
+                 ; update menu
                  (when bugs
+                   (reset! old-file file) 
                    (update-items menu bugs
                                  (fn [active] (write-bugs file bugs active)) 
                                  (fn [] (write-bugs file bugs nil)))))))))
