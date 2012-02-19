@@ -228,8 +228,12 @@
                      ttasks (load-ttasks tfile)]
 
                  ; if file *name* changed, write out old one first
-                 ;(when (and @old-file (not= @old-file file))
-                 ;  (write-bugs @old-file (load-bugs @old-file) nil))
+                 (when (and @old-file (not= @old-file file))
+                   ; we presume this is gonna work since it worked last time :)
+                   (write-ttasks (ttname @old-file)
+                                 (load-tasks @old-file)
+                                 (load-ttasks (ttname @old-file))
+                                 nil))
 
                  ; update menu
                  (when tasks
