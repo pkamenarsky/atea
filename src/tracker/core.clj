@@ -29,6 +29,9 @@
 (defn to-str [mins]
   (format "[%02d:%02d]" (quot mins 60) (mod mins 60)))
 
+(defn key-task [task]
+  (str (:project task) (:description task)))
+
 (defn parition-items [items]
   ; first group by priority into a {pri item} map,
   ; then group the first 10 items of every priority by project
@@ -37,7 +40,7 @@
           {}
           (group-by :priority items)))
 
-(defn update-items [menu items actfn deactfn]
+(defn update-items [menu items active actfn deactfn]
   ; project / priority section functions
   (let [add-section
         (fn [add-sep? title sec-items]
@@ -49,7 +52,7 @@
             [item sec-items]
             (.addItem
               menu
-              (if (= (get-in items [:active :number]) (:number item))
+              (if (= (key-task item) (key-task active))
                 (str "➡ " (:description item))  ;◆✦●
                 (:description item)) 
               (action #(actfn (assoc item :since (now)))))))
@@ -58,7 +61,7 @@
         (fn [add-sep? priority prjs]
           (add-section
             add-sep?
-            (str "Priority " priority " - " (key (first prjs)))
+            (str "Priority " (inc priority) " - " (key (first prjs)))
             (val (first prjs)))
           (doseq [[prj items] (next prjs)] (add-section true prj items)))]
 
@@ -67,25 +70,27 @@
 
     ; add "now working" section
     (when (:active items)
-      (let [stime (to-mins (- (now) (get-in items [:active :since])))]
+      (let [stime (to-mins (- (now) (:since active)))]
         (.addItem
           menu
           (str "Session: "
                (to-str stime)
                " - Sum: "
-               (to-str (+ (get-in items [:active :time]) stime)))
+               (to-str (+ (:time active) stime)))
           nil) 
         (.addSeparator menu)
         (.addItem menu "Stop work" (action #(deactfn)))
         (.addSeparator menu))) 
 
     ; add items sorted by priority and project
-    (let [part-items (sort (parition-items (:bugs items)))]
+    (let [part-items (sort (parition-items items))]
+      (println "ITEMS " part-items)
       (add-priority false (key (first part-items)) (val (first part-items)))
       (doseq [[pri prjs] (next part-items)] (add-priority true pri prjs)))))
 
 ; IO -----------------------------------------------------------------------
 
+; tracked tasks
 (defn parse-status [line]
   (let [match (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*)" (first line))]
     (when match
@@ -110,8 +115,11 @@
          :ttasks (map parse-ttask (next lines))}
         {:active nil
          :ttasks (map parse-ttask lines)}))
-    (catch java.io.FileNotFoundException e nil)))
+    (catch java.io.FileNotFoundException e
+      {:active nil
+       :ttasks []})))
 
+; tasks
 (defn parse-task [line]
   (let [match (re-matches #"\s*\[(.*)\]\s*(.*)" line)]
     (if match
@@ -128,9 +136,6 @@
       (for [[pri items] tasks
             task items] (into (parse-task task) {:priority pri :time 0}))) 
     (catch java.io.FileNotFoundException e nil)))
-
-(defn key-task [task]
-  (str (:project task) (:description task)))
 
 (defn key-tasks [tasks]
   (zipmap (map key-task tasks) tasks))
@@ -157,11 +162,11 @@
 (defn write-ttask [ttask]
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
 
-(defn write-tasks [file tasks new-active]
+(defn write-ttasks [file tasks new-active]
   (try
     (let [lines (map write-ttask tasks)
           content (string/join "\n" (if new-active
-                                      (cons (write-status) lines)
+                                      (cons (write-status new-active) lines)
                                       lines))]
       (spit file content))
     (catch java.io.FileNotFoundException e nil)))
@@ -197,6 +202,12 @@
         (write-default-cfg)
         default-cfg))))
 
+(defn ttname [tname]
+  (let [match (re-matches #"(.*)\.(.*)" tname)]
+    (if match
+      (str (match 1) "-times." (match 2))
+      (str tname "-times"))))
+
 (defn main []
   (let [old-file (atom nil)
         icon (load-icon "resources/clock.png")
@@ -206,16 +217,17 @@
     (.setActionListener
       menu
       (action #(let [file (:file (load-cfg))
-                     bugs (load-bugs file)]
+                     tasks (load-tasks file)
+                     ttasks (load-ttasks (ttname file))]
 
                  ; if file *name* changed, write out old one first
-                 (when (and @old-file (not= @old-file file))
-                   (write-bugs @old-file (load-bugs @old-file) nil))
+                 ;(when (and @old-file (not= @old-file file))
+                 ;  (write-bugs @old-file (load-bugs @old-file) nil))
 
                  ; update menu
-                 (when bugs
+                 (when tasks
                    (reset! old-file file) 
-                   (update-items menu bugs
-                                 (fn [active] (write-bugs file bugs active)) 
-                                 (fn [] (write-bugs file bugs nil)))))))))
+                   (update-items menu tasks (:active ttasks)
+                                 (fn [active] ()) 
+                                 (fn [] ()))))))))
 
