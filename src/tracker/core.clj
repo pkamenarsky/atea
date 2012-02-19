@@ -140,39 +140,41 @@
 (defn key-tasks [tasks]
   (zipmap (map key-task tasks) tasks))
 
-(defn merge-tasks [tasks ttasks new-active]
-  ; if there's an active task in ttasks update its time
-  (let [active (:active ttasks)
-        kts (if active
-              (update-in (key-tasks (:ttasks ttasks))
-                         [(key-task active) :time]
-                         #(+ % (to-mins (- (now) (:since active)))))
-              (key-tasks (:ttasks ttasks)))]
-
-    ; merge textfile tasks and tracked tasks
-    {:ttasks (vals (merge-with (fn [t tt] {:priority (:priority t) 
-                                           :project (:project t)
-                                           :description (:description t)
-                                           :time (:time tt)})
-                               (key-tasks tasks)
-                               kts))
-     :new-active (if new-active 
-                   (assoc new-active :time (get-in kts [(key-task new-active) :time] 0))
-                   nil)}))
-
 (defn write-status [active]
   (str "# Working on \"" (:description active) "\" in \"" (:project active) "\" since " (:since active) " for " (:time active)))
 
 (defn write-ttask [ttask]
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
 
-(defn write-ttasks [file tasks]
+(defn write-ttasks [file tasks ttasks new-active]
   (try
-    (let [lines (map write-ttask (:ttasks tasks))
-          content (string/join "\n" (if (:new-active tasks)
-                                      (cons (write-status (:new-active tasks)) lines)
+    (let [active (:active ttasks)
+          kts (if active
+                (update-in (key-tasks (:ttasks ttasks))
+                           [(key-task active) :time]
+                           #(+ % (to-mins (- (now) (:since active)))))
+                (key-tasks (:ttasks ttasks)))
+
+          ; merge textfile tasks and tracked tasks
+          tmerged (vals (merge-with (fn [t tt] {:priority (:priority t) 
+                                                :project (:project t)
+                                                :description (:description t)
+                                                :time (:time tt)})
+                                    (key-tasks tasks)
+                                    kts)) 
+          
+          ; get active time
+          tactive (if new-active 
+                    (assoc new-active :time (get-in kts [(key-task new-active) :time] 0))
+                    nil)
+
+          ; write lines
+          lines (map write-ttask tmerged)
+          content (string/join "\n" (if tactive
+                                      (cons (write-status tactive) lines)
                                       lines))]
-      (spit file content))
+
+      (spit file content)) 
     (catch java.io.FileNotFoundException e nil)))
 
 ; Track file updates -------------------------------------------------------
@@ -233,6 +235,6 @@
                  (when tasks
                    (reset! old-file file) 
                    (update-items menu tasks (:active ttasks)
-                                 (fn [new-active] (write-ttasks tfile (merge-tasks tasks ttasks new-active))) 
-                                 (fn [] (write-ttasks tfile (merge-tasks tasks ttasks nil))))))))))
+                                 (fn [new-active] (write-ttasks tfile tasks ttasks new-active)) 
+                                 (fn [] (write-ttasks tfile tasks ttasks nil)))))))))
 
