@@ -86,30 +86,12 @@
 
 ; IO -----------------------------------------------------------------------
 
-(defn maybe-int [string v]
-  (try
-    (Integer. string)
-    (catch Exception e v)))
-
-(def status-re #"# Working on \"(.*)\" in \"(.*)\" since (\d*)")
-
-(defn drop-last-elems [pred coll]
-  (reverse (drop-while pred (reverse coll))))
-
-(defn parse-bug [bugs [number line]]
-  (if (re-matches #"[^#\s].*" line) 
-    (conj bugs 
-          (let [tokens (string/split line #"\s+" 4)
-                t (maybe-int (tokens 2) nil)]
-            {:number number
-             :priority (maybe-int (tokens 0) 999)
-             :project (tokens 1)
-             :time (if t t 0)
-             :description (if t
-                            (tokens 3)
-                            ; if no time given, desc is 2nd token
-                            ((string/split line #"\s+" 3) 2))}))
-    bugs))
+(defn parse-status [line]
+  (let [match (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*)" (first line))]
+    (when match
+      {:description (match 1)
+       :project (match 2)
+       :since (Long. (match 3))})))
 
 (defn parse-ttask [line]
   (let [match (re-matches #"(\d*) (\d*) \[(.*)\] (.*)" line)]
@@ -122,111 +104,67 @@
 (defn load-ttasks [file]
   (try 
     (let [lines (string/split-lines (slurp file))
-          status (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*)" (first lines))]
+          status (parse-status (first lines))]
       (if status
-        {:active {:description (status 1)
-                  :project (status 2)
-                  :since (Long. (status 3))}
+        {:active status
          :ttasks (map parse-ttask (next lines))}
         {:active nil
          :ttasks (map parse-ttask lines)}))
     (catch java.io.FileNotFoundException e nil)))
 
-(defn get-project [line]
+(defn parse-task [line]
   (let [match (re-matches #"\s*\[(.*)\]\s*(.*)" line)]
     (if match
-      (next match)
-      (list "Default" (string/trim line)))))
+      {:project (match 1) :description (match 2)}
+      {:project "Default" :description (string/trim line)})))
 
 (defn load-tasks [file]
   (try 
-    ; group-by priority and then by project
     (let [lines (string/split-lines (slurp file))
-          pris (filter #(not (empty? (first %))) (partition-by empty? lines))]
-      (map #(reduce (fn [a [pro desc]]
-                      (if (a pro)
-                        (update-in a [pro] conj desc)
-                        (assoc a pro [desc])))
-                    {}
-                    (map get-project %)) pris))
+          pris (filter #(not (empty? (first %))) (partition-by empty? lines))
+          tasks (zipmap (range (count pris)) pris)]
+
+      ; flatten into maps
+      (for [[pri items] tasks
+            task items] (into (parse-task task) {:priority pri :time 0}))) 
     (catch java.io.FileNotFoundException e nil)))
 
-(defn flatten-tasks [tasks]
-  (for [[pri projs] (zipmap (range (count tasks)) tasks)
-        [proj descs] projs
-        desc descs] {:priority pri :project proj :description desc :time 0}))
+(defn key-task [task]
+  (str (:project task) (:description task)))
 
 (defn key-tasks [tasks]
-  (zipmap (map #(str (:project %) (:description %)) tasks) tasks))
+  (zipmap (map key-task tasks) tasks))
 
 (defn merge-tasks [tasks ttasks]
-  (merge-with #({:priority %
-                 :project %
-                 :description %
-                 :time %2}) tasks ttasks))
+  ; if there's an active task in ttasks update its time
+  (let [active (:active ttasks)
+        kts (if active
+              (update-in [(key-tasks (:ttasks ttasks)) :time] 
+                         (key-task active) #(+ % (to-mins (- (now) (:since active)))))
+              (:ttasks ttasks))]
+
+    ; merge textfile tasks and tracked tasks
+    (vals (merge-with #({:priority %
+                         :project %
+                         :description %
+                         :time %2})
+                      (key-tasks tasks)
+                      kts))))
+
+(defn write-status [active]
+  (str "# Working on " {:description active} " in " {:project active} " since " {:since active}))
 
 (defn write-ttask [ttask]
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
 
-(defn write-ttasks [file ttasks]
+(defn write-tasks [file tasks new-active]
   (try
-    (let [content (string/join "\n" (map write-ttask ttasks))]
+    (let [lines (map write-ttask tasks)
+          content (string/join "\n" (if new-active
+                                      (cons (write-status) lines)
+                                      lines))]
       (spit file content))
     (catch java.io.FileNotFoundException e nil)))
-
-(defn load-bugs [file]
-  (try 
-    (let [lines (string/split-lines (slurp file))
-          bugs (reduce parse-bug [] (map vector (range (count lines)) lines))
-          active-match (some (partial re-matches status-re) lines)]
- 
-      ; drop the status line and all trailing empty lines
-      {:lines (vec (drop-last-elems
-                     (comp empty? string/trim)
-                     (filter #(not (re-matches status-re %)) lines))) 
-       :bugs bugs
- 
-       ; active task only when match has 4 tokens
-       :active (when (= (count active-match) 4)   
-                 (some #(when
-                          (and (= (:description %) (active-match 1))
-                               (= (:project %) (active-match 2)))
-                          (into % {:since (Long. (active-match 3))})) bugs))})
-    (catch Exception e nil)))
-
-(defn pad-tabs [s n]
-  (str s (apply str (repeat (- n (quot (count s) 4)) "\t"))))
-
-(defn write-bug [bug]
-  (format "%s\t%s\t%s\t%s"
-          (:priority bug)
-          (pad-tabs (:project bug) 2)
-          (pad-tabs (str (:time bug)) 1) 
-          (:description bug)))
-
-(defn write-bugs [file bugs new-active]
-  (try
-    ; add elapsed time to old active bug and update its associated line
-    (let [old-active (:active bugs)
-          lines (if old-active
-                  (assoc
-                    (:lines bugs)
-                    (:number old-active)
-                    (write-bug (update-in
-                                 old-active
-                                 [:time]
-                                 #(+ % (to-mins (- (now) (:since old-active)))))))
-                  (:lines bugs))]
-
-      ; write out new lines & new active bug
-      (spit file (string/join "\n" (if new-active
-                                     (conj lines
-                                           (format
-                                             "\n\n# Working on \"%s\" in \"%s\" since %d"
-                                             (:description new-active)
-                                             (:project new-active) 
-                                             (:since new-active)))
-                                     lines))))))
 
 ; Track file updates -------------------------------------------------------
 
