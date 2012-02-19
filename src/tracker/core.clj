@@ -129,8 +129,13 @@
 
 (defn load-tasks [file]
   (try 
-    (let [lines (string/split-lines (slurp file))
-          pris (filter #(not (empty? (first %))) (partition-by empty? lines))
+    (let [lines2 (string/split-lines (slurp file))
+          lines (filter
+                  #(not (re-matches #"\s+[^\s]+.*" %)) 
+                  (string/split-lines (slurp file))) 
+          pris (filter
+                 #(not (re-matches #"\s*" (first %)))
+                 (partition-by (partial re-matches #"\s*") lines))
           tasks (zipmap (range (count pris)) pris)]
 
       ; flatten into maps
@@ -142,7 +147,10 @@
   (zipmap (map key-task tasks) tasks))
 
 (defn write-status [active]
-  (str "# Working on \"" (:description active) "\" in \"" (:project active) "\" since " (:since active) " for " (:time active)))
+  (str "# Working on \"" (:description active)
+       "\" in \"" (:project active)
+       "\" since " (:since active)
+       " for " (:time active)))
 
 (defn write-ttask [ttask]
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
