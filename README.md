@@ -10,11 +10,11 @@ Even though a text file based system doesn't scale well (or at all) beyond a sin
 
 ## Task entry
 
-Entering a new task in Atea is just as easy as entering a new line in a text file:
+Entering a new task in Atea is just as easy as entering a new line in a text file and saving:
 
 ![](https://github.com/pkamenarsky/atea/raw/master/doc/screens/1.png)
 
-Enter more tasks:
+Add more tasks:
 
 ![](https://github.com/pkamenarsky/atea/raw/master/doc/screens/2.png)
 
@@ -52,7 +52,7 @@ Times are saved in a separate column based file in plain text; this allows for e
 
 ## Dropbox integration
 
-
+Work in progress.
 
 ## License
 
