@@ -129,10 +129,11 @@
 
 (defn load-tasks [file]
   (try 
-    (let [lines2 (string/split-lines (slurp file))
-          lines (filter
+    ; filter out all non empty lines starting with one or more whitespaces
+    (let [lines (filter
                   #(not (re-matches #"\s+[^\s]+.*" %)) 
                   (string/split-lines (slurp file))) 
+          ; partition by empty or all-whitespace lines
           pris (filter
                  #(not (re-matches #"\s*" (first %)))
                  (partition-by (partial re-matches #"\s*") lines))
