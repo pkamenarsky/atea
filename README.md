@@ -1,16 +1,12 @@
 ## Atea
 
-A minimalistic text file based menu bar time tracker for MacOS.
-
-![](/Users/phil/Projects/time-tracker/image.png)
-
-Atea allows you to manage your tasks with ease.
+Atea is a minimalistic text file based menu bar time tracker for MacOS.
 
 There are a lot of great task managers out there - [Fogbugz](http://www.fogcreek.com/fogbugz/), [Pivotal](http://www.pivotaltracker.com/), [Lighthouse](http://lighthouseapp.com/) and [Trello](https://trello.com/) among others. So why yet another?
 
 If you are like me and find yourself in a situation where you want to *quickly* write down a task, bug or an idea you just thought of, more often than not you end up opening up your favorite text editor and saving a `TODO.txt` somewhere. At first it contains 3 or 4 entries; then it starts to grow - and you have to invent a custom [DSL](http://en.wikipedia.org/wiki/Domain-specific_language) just so you can track priorities, projects or time.
 
-Even though a text file based system doesn't scale well (or at all) beyond a single person, it has one unbeatable advantage over web-interface based task management tools - locally editing and reordering tasks is easier and much faster, especially with editors like [vim](http://www.vim.org/) or [Emacs](http://www.gnu.org/software/emacs/).
+Even though a text file based system doesn't scale well (or at all) beyond a single person, it has one unbeatable advantage over web-interface based task management tools - locally editing and reordering tasks is *much* easier and faster, especially with editors like [vim](http://www.vim.org/) or [Emacs](http://www.gnu.org/software/emacs/).
 
 ## Task entry
 
@@ -26,7 +22,7 @@ Now comes the interesting part; prioritizing something is just an empty line awa
 
 ![](/Users/phil/Projects/time-tracker/screens/3.png)
 
-But what if we need to subdivide tasks into projects (or modules)? Just add an optional `[Project]` in front of a task; no qualifier stands for `[Default]`:
+But what if the need arises to subdivide tasks into projects (or modules)? Just add an optional `[Project]` in front of a task; no qualifier stands for `[Default]`:
 
 ![](/Users/phil/Projects/time-tracker/screens/4.png)
 
@@ -36,11 +32,9 @@ Done with something? Just delete it:
 
 Completing all tasks of a given priority has the beneficial side-effect of pushing up all other tasks.
 
+Lines starting with a whitespace character are ignored; this allows for easy "note taking":
+
 ![](/Users/phil/Projects/time-tracker/screens/6.png)
-
-Lines starting with # or a whitespace character are ignored; this allows for easy "note taking":
-
-![](/Users/phil/Projects/time-tracker/screens/7.png)
 
 ## Time tracking
 
@@ -48,7 +42,11 @@ Tracking time [allows](http://www.google.com/search?q=time%20tracking%20benefits
 
 To start working on a task, just click it:
 
+![](/Users/phil/Projects/time-tracker/screens/7.png)
+
 When you are done, stop working:
+
+![](/Users/phil/Projects/time-tracker/screens/8.png)
 
 Times are saved in a separate column based file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
 
