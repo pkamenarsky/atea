@@ -101,7 +101,7 @@
 (defn parse-ttask [line]
   (let [match (re-matches #"(\d*) (\d*) \[(.*)\] (.*)" line)]
     (when match
-      {:priority (match 1)
+      {:priority (Long. (match 1)) 
        :time (Long. (match 2)) 
        :project (match 3)
        :description (match 4)})))
@@ -144,9 +144,11 @@
   (str "# Working on \"" (:description active) "\" in \"" (:project active) "\" since " (:since active) " for " (:time active)))
 
 (defn write-ttask [ttask]
+  (println "tryin to write " ttask)
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
 
 (defn write-ttasks [file tasks ttasks new-active]
+  (println "active: " new-active)
   (try
     (let [active (:active ttasks)
           kts (if active
@@ -161,7 +163,7 @@
                                                 :description (:description t)
                                                 :time (:time tt)})
                                     (key-tasks tasks)
-                                    kts)) 
+                                    kts))
           
           ; get active time
           tactive (if new-active 
@@ -174,6 +176,7 @@
                                       (cons (write-status tactive) lines)
                                       lines))]
 
+      (println tactive)
       (spit file content)) 
     (catch java.io.FileNotFoundException e nil)))
 
