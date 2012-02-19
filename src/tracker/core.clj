@@ -84,7 +84,8 @@
 
     ; add items sorted by priority and project
     (let [part-items (sort (parition-items items))]
-      (add-priority false (key (first part-items)) (val (first part-items)))
+      (when (first part-items)
+        (add-priority false (key (first part-items)) (val (first part-items)))) 
       (doseq [[pri prjs] (next part-items)] (add-priority true pri prjs)))))
 
 ; IO -----------------------------------------------------------------------
@@ -135,7 +136,7 @@
       ; flatten into maps
       (for [[pri items] tasks
             task items] (into (parse-task task) {:priority pri :time 0}))) 
-    (catch java.io.FileNotFoundException e nil)))
+    (catch java.io.FileNotFoundException e [])))
 
 (defn key-tasks [tasks]
   (zipmap (map key-task tasks) tasks))
@@ -144,11 +145,9 @@
   (str "# Working on \"" (:description active) "\" in \"" (:project active) "\" since " (:since active) " for " (:time active)))
 
 (defn write-ttask [ttask]
-  (println "tryin to write " ttask)
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
 
 (defn write-ttasks [file tasks ttasks new-active]
-  (println "active: " new-active)
   (try
     (let [active (:active ttasks)
           kts (if active
@@ -176,7 +175,6 @@
                                       (cons (write-status tactive) lines)
                                       lines))]
 
-      (println tactive)
       (spit file content)) 
     (catch java.io.FileNotFoundException e nil)))
 

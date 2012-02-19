@@ -1,11 +1,63 @@
-time-tracker
-------------
+## Atea
 
-A minimalistic menu bar time tracker for MacOS.
+A minimalistic text file based menu bar time tracker for MacOS.
 
-License
--------
+![](/Users/phil/Projects/time-tracker/image.png)
 
-Copyright (C) 2012 FIXME
+Atea allows you to manage your tasks with ease.
+
+There are a lot of great task managers out there - [Fogbugz](http://www.fogcreek.com/fogbugz/), [Pivotal](http://www.pivotaltracker.com/), [Lighthouse](http://lighthouseapp.com/) and [Trello](https://trello.com/) among others. So why yet another?
+
+If you are like me and find yourself in a situation where you want to *quickly* write down a task, bug or an idea you just thought of, more often than not you end up opening up your favorite text editor and saving a `TODO.txt` somewhere. At first it contains 3 or 4 entries; then it starts to grow - and you have to invent a custom [DSL](http://en.wikipedia.org/wiki/Domain-specific_language) just so you can track priorities, projects or time.
+
+Even though a text file based system doesn't scale well (or at all) beyond a single person, it has one unbeatable advantage over web-interface based task management tools - locally editing and reordering tasks is easier and much faster, especially with editors like [vim](http://www.vim.org/) or [Emacs](http://www.gnu.org/software/emacs/).
+
+## Task entry
+
+Entering a new task in Atea is just as easy as entering a new line in a text file:
+
+![](/Users/phil/Projects/time-tracker/screens/1.png)
+
+Enter more tasks:
+
+![](/Users/phil/Projects/time-tracker/screens/2.png)
+
+Now comes the interesting part; prioritizing something is just an empty line away:
+
+![](/Users/phil/Projects/time-tracker/screens/3.png)
+
+But what if we need to subdivide tasks into projects (or modules)? Just add an optional `[Project]` in front of a task; no qualifier stands for `[Default]`:
+
+![](/Users/phil/Projects/time-tracker/screens/4.png)
+
+Done with something? Just delete it:
+
+![](/Users/phil/Projects/time-tracker/screens/5.png)
+
+Completing all tasks of a given priority has the beneficial side-effect of pushing up all other tasks.
+
+![](/Users/phil/Projects/time-tracker/screens/6.png)
+
+Lines starting with # or a whitespace character are ignored; this allows for easy "note taking":
+
+![](/Users/phil/Projects/time-tracker/screens/7.png)
+
+## Time tracking
+
+Tracking time [allows](http://www.google.com/search?q=time%20tracking%20benefits) you to bill your clients more accurately, improve resource allocation by comparing estimates with actual times spent or just get a clear picture of what you have been doing the last couple of months.
+
+To start working on a task, just click it:
+
+When you are done, stop working:
+
+Times are saved in a separate column based file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
+
+## Dropbox integration
+
+
+
+## License
+
+Copyright (C) 2012 Philip Kamenarsky
 
 Distributed under the Eclipse Public License, the same as Clojure.
