@@ -12,29 +12,29 @@ Even though a text file based system doesn't scale well (or at all) beyond a sin
 
 Entering a new task in Atea is just as easy as entering a new line in a text file:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/1.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/1.png)
 
 Enter more tasks:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/2.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/2.png)
 
 Now comes the interesting part; prioritizing something is just an empty line away:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/3.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/3.png)
 
 But what if the need arises to subdivide tasks into projects (or modules)? Just add an optional `[Project]` in front of a task; no qualifier stands for `[Default]`:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/4.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/4.png)
 
 Done with something? Just delete it:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/5.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/5.png)
 
 Completing all tasks of a given priority has the beneficial side-effect of pushing up all other tasks.
 
 Lines starting with a whitespace character are ignored; this allows for easy "note taking":
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/6.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/6.png)
 
 ## Time tracking
 
@@ -42,11 +42,11 @@ Tracking time [allows](http://www.google.com/search?q=time%20tracking%20benefits
 
 To start working on a task, just click it:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/7.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/7.png)
 
 When you are done, stop working:
 
-![](https://github.com/pkamenarsky/atea/blob/master/doc/screens/8.png)
+![](https://github.com/pkamenarsky/atea/raw/blob/master/doc/screens/8.png)
 
 Times are saved in a separate column based file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
 
