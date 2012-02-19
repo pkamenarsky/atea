@@ -91,6 +91,11 @@
     (Integer. string)
     (catch Exception e v)))
 
+(def status-re #"# Working on \"(.*)\" in \"(.*)\" since (\d*)")
+
+(defn drop-last-elems [pred coll]
+  (reverse (drop-while pred (reverse coll))))
+
 (defn parse-bug [bugs [number line]]
   (if (re-matches #"[^#\s].*" line) 
     (conj bugs 
@@ -106,20 +111,68 @@
                             ((string/split line #"\s+" 3) 2))}))
     bugs))
 
-(def status-re #"# Working on \"(.*)\" in \"(.*)\" since (\d*)")
+(defn parse-ttask [line]
+  (let [match (re-matches #"(\d*) (\d*) \[(.*)\] (.*)" line)]
+    (when match
+      {:priority (match 1)
+       :time (match 2)
+       :project (match 3)
+       :description (match 4)})))
 
-(defn drop-last-elems [pred coll]
-  (reverse (drop-while pred (reverse coll))))
+(defn load-ttasks [file]
+  (try 
+    (let [lines (string/split-lines (slurp file))
+          status (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*)" (first lines))]
+      (if status
+        {:active {:description (status 1)
+                  :project (status 2)
+                  :since (Long. (status 3))}
+         :ttasks (map parse-ttask (next lines))}
+        {:active nil
+         :ttasks (map parse-ttask lines)}))
+    (catch java.io.FileNotFoundException e nil)))
 
-(defn pad-tabs [s n]
-  (str s (apply str (repeat (- n (quot (count s) 4)) "\t"))))
+(defn get-project [line]
+  (let [match (re-matches #"\s*\[(.*)\]\s*(.*)" line)]
+    (if match
+      (next match)
+      (list "Default" (string/trim line)))))
 
-(defn write-bug [bug]
-  (format "%s\t%s\t%s\t%s"
-          (:priority bug)
-          (pad-tabs (:project bug) 2)
-          (pad-tabs (str (:time bug)) 1) 
-          (:description bug)))
+(defn load-tasks [file]
+  (try 
+    ; group-by priority and then by project
+    (let [lines (string/split-lines (slurp file))
+          pris (filter #(not (empty? (first %))) (partition-by empty? lines))]
+      (map #(reduce (fn [a [pro desc]]
+                      (if (a pro)
+                        (update-in a [pro] conj desc)
+                        (assoc a pro [desc])))
+                    {}
+                    (map get-project %)) pris))
+    (catch java.io.FileNotFoundException e nil)))
+
+(defn flatten-tasks [tasks]
+  (for [[pri projs] (zipmap (range (count tasks)) tasks)
+        [proj descs] projs
+        desc descs] {:priority pri :project proj :description desc :time 0}))
+
+(defn key-tasks [tasks]
+  (zipmap (map #(str (:project %) (:description %)) tasks) tasks))
+
+(defn merge-tasks [tasks ttasks]
+  (merge-with #({:priority %
+                 :project %
+                 :description %
+                 :time %2}) tasks ttasks))
+
+(defn write-ttask [ttask]
+  (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
+
+(defn write-ttasks [file ttasks]
+  (try
+    (let [content (string/join "\n" (map write-ttask ttasks))]
+      (spit file content))
+    (catch java.io.FileNotFoundException e nil)))
 
 (defn load-bugs [file]
   (try 
@@ -140,6 +193,16 @@
                                (= (:project %) (active-match 2)))
                           (into % {:since (Long. (active-match 3))})) bugs))})
     (catch Exception e nil)))
+
+(defn pad-tabs [s n]
+  (str s (apply str (repeat (- n (quot (count s) 4)) "\t"))))
+
+(defn write-bug [bug]
+  (format "%s\t%s\t%s\t%s"
+          (:priority bug)
+          (pad-tabs (:project bug) 2)
+          (pad-tabs (str (:time bug)) 1) 
+          (:description bug)))
 
 (defn write-bugs [file bugs new-active]
   (try
