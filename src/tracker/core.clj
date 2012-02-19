@@ -69,7 +69,7 @@
     (doseq [index (range (.getItemCount menu))] (.removeItem menu 0)) 
 
     ; add "now working" section
-    (when (:active items)
+    (when active
       (let [stime (to-mins (- (now) (:since active)))]
         (.addItem
           menu
@@ -84,7 +84,6 @@
 
     ; add items sorted by priority and project
     (let [part-items (sort (parition-items items))]
-      (println "ITEMS " part-items)
       (add-priority false (key (first part-items)) (val (first part-items)))
       (doseq [[pri prjs] (next part-items)] (add-priority true pri prjs)))))
 
@@ -92,17 +91,18 @@
 
 ; tracked tasks
 (defn parse-status [line]
-  (let [match (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*)" (first line))]
+  (let [match (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*) for (\d*)" line)]
     (when match
       {:description (match 1)
        :project (match 2)
-       :since (Long. (match 3))})))
+       :since (Long. (match 3))
+       :time (Long. (match 4))})))
 
 (defn parse-ttask [line]
   (let [match (re-matches #"(\d*) (\d*) \[(.*)\] (.*)" line)]
     (when match
       {:priority (match 1)
-       :time (match 2)
+       :time (Long. (match 2)) 
        :project (match 3)
        :description (match 4)})))
 
@@ -140,33 +140,37 @@
 (defn key-tasks [tasks]
   (zipmap (map key-task tasks) tasks))
 
-(defn merge-tasks [tasks ttasks]
+(defn merge-tasks [tasks ttasks new-active]
   ; if there's an active task in ttasks update its time
   (let [active (:active ttasks)
         kts (if active
-              (update-in [(key-tasks (:ttasks ttasks)) :time] 
-                         (key-task active) #(+ % (to-mins (- (now) (:since active)))))
-              (:ttasks ttasks))]
+              (update-in (key-tasks (:ttasks ttasks))
+                         [(key-task active) :time]
+                         #(+ % (to-mins (- (now) (:since active)))))
+              (key-tasks (:ttasks ttasks)))]
 
     ; merge textfile tasks and tracked tasks
-    (vals (merge-with #({:priority %
-                         :project %
-                         :description %
-                         :time %2})
-                      (key-tasks tasks)
-                      kts))))
+    {:ttasks (vals (merge-with (fn [t tt] {:priority (:priority t) 
+                                           :project (:project t)
+                                           :description (:description t)
+                                           :time (:time tt)})
+                               (key-tasks tasks)
+                               kts))
+     :new-active (if new-active 
+                   (assoc new-active :time (get-in kts [(key-task new-active) :time] 0))
+                   nil)}))
 
 (defn write-status [active]
-  (str "# Working on " {:description active} " in " {:project active} " since " {:since active}))
+  (str "# Working on \"" (:description active) "\" in \"" (:project active) "\" since " (:since active) " for " (:time active)))
 
 (defn write-ttask [ttask]
   (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
 
-(defn write-ttasks [file tasks new-active]
+(defn write-ttasks [file tasks]
   (try
-    (let [lines (map write-ttask tasks)
-          content (string/join "\n" (if new-active
-                                      (cons (write-status new-active) lines)
+    (let [lines (map write-ttask (:ttasks tasks))
+          content (string/join "\n" (if (:new-active tasks)
+                                      (cons (write-status (:new-active tasks)) lines)
                                       lines))]
       (spit file content))
     (catch java.io.FileNotFoundException e nil)))
@@ -217,8 +221,9 @@
     (.setActionListener
       menu
       (action #(let [file (:file (load-cfg))
+                     tfile (ttname file)
                      tasks (load-tasks file)
-                     ttasks (load-ttasks (ttname file))]
+                     ttasks (load-ttasks tfile)]
 
                  ; if file *name* changed, write out old one first
                  ;(when (and @old-file (not= @old-file file))
@@ -228,6 +233,6 @@
                  (when tasks
                    (reset! old-file file) 
                    (update-items menu tasks (:active ttasks)
-                                 (fn [active] ()) 
-                                 (fn [] ()))))))))
+                                 (fn [new-active] (write-ttasks tfile (merge-tasks tasks ttasks new-active))) 
+                                 (fn [] (write-ttasks tfile (merge-tasks tasks ttasks nil))))))))))
 
