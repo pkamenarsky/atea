@@ -1,6 +1,6 @@
-## Atea
+# Atea
 
-<div style="float: right"><img src="https://github.com/pkamenarsky/atea/raw/master/resources/icon_128.png"></div>
+<img src="https://github.com/pkamenarsky/atea/raw/master/resources/icon_128.png" align="right">
 
 [Atea](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg) is a minimalistic text file based menu bar time tracker for MacOS.
 
