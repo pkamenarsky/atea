@@ -4,8 +4,7 @@
   (:import org.jdesktop.jdic.tray.internal.impl.MacTrayIconService))
 
 (defn load-icon [name]
-  (let [is (.getResourceAsStream (ClassLoader/getSystemClassLoader) name)]
-    (javax.swing.ImageIcon. (javax.imageio.ImageIO/read is))))
+  (javax.swing.ImageIcon. (javax.imageio.ImageIO/read (clojure.java.io/resource name))))
 
 (defn get-tray []
   (MacSystemTrayService/getInstance))
@@ -236,9 +235,9 @@
       (str (match 1) "-times." (match 2))
       (str tname "-times"))))
 
-(defn main []
+(defn -main []
   (let [old-file (atom nil)
-        icon (load-icon "resources/clock.png")
+        icon (load-icon "clock.png")
         menu (create-menu)]
     (.addTrayIcon (get-tray) menu 0)
     (.setIcon menu icon)
@@ -262,5 +261,6 @@
                    (reset! old-file file) 
                    (update-items menu tasks (:active ttasks)
                                  (fn [new-active] (write-ttasks tfile tasks ttasks new-active)) 
-                                 (fn [] (write-ttasks tfile tasks ttasks nil)))))))))
+                                 (fn [] (write-ttasks tfile tasks ttasks nil))))))) 
+    (Thread/sleep 0)))
 

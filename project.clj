@@ -5,4 +5,4 @@
             :dev-dependencies
 				[[native-deps "1.0.5"]
 				[vimclojure/server "2.3.1" :exclusions [org.clojure/clojure]]]
-            :main hs.base.core)
+            :main tracker.core)
