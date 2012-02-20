@@ -1,6 +1,6 @@
 ## Atea
 
-Atea is a minimalistic text file based menu bar time tracker for MacOS.
+[Atea](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg) is a minimalistic text file based menu bar time tracker for MacOS.
 
 There are a lot of great task managers out there - [Fogbugz](http://www.fogcreek.com/fogbugz/), [Pivotal](http://www.pivotaltracker.com/), [Lighthouse](http://lighthouseapp.com/) and [Trello](https://trello.com/) among others. So why yet another?
 
@@ -56,9 +56,53 @@ Minutes (`m`), hours (`h`) and days (`d`) are supported.
 
 Times and estimates are saved in a separate csv file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
 
+## Configuration
+
+Atea automatically creates an `~/.atea` file in the user home folder with the following contents:
+
+    {
+	    :file "/Users/.../tasks.txt"
+    }
+
+This is where the current task file resides; you can change it to whatever you desire.
+
 ## Dropbox integration
 
-Work in progress.
+Since tasks are stored in simple text files, [Dropbox](http://www.dropbox.com/) can be used for simple synchronization of tasks.
+
+For example, you can start working on a task on you laptop, then move over to you main machine and have your tasks along with the current worked time automatically updated there; just set up the configuration file accordingly.
+
+## Multiple projects
+
+WIP
+
+## Building
+
+    lein deps
+	lein native-deps
+	lein uberjar
+
+At this point you'll need to use Apple's Jar Bundler to create `atea.app` out of the generated standalone jar (this can be automated though, patches welcome). In order to hide the dock icon, edit the `atea.app/Contents/Info.plist` file and add the following key:
+
+    <key>LSUIElement</key>
+    <string>1</string>
+
+Create a `dmg` folder and place the `atea.app` bundle there:
+
+    mkdir dmg
+	mv atea.app dmg
+	ln -s /Applications dmg/Applications
+
+Update the `create-dmg` submodule:
+
+    git submodule init
+	git submodule update
+
+And then finally run the `make-dmg` script:
+
+    ./make-dmg
+
+This should create a deployable `dmg` file.
 
 ## License
 
