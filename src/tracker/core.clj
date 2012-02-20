@@ -24,7 +24,7 @@
   (.getTime (java.util.Date.)))
 
 (defn to-mins [msec]
-  (quot msec 1000))
+  (quot msec 60000))
 
 (defn to-str [mins]
   (format "[%02d:%02d]" (quot mins 60) (mod mins 60)))
@@ -212,14 +212,19 @@
 
 ; main ---------------------------------------------------------------------
 
-(def default-cfg {:file "tracker.txt"})
+(defn rel-to-home [file]
+  (str (System/getProperty "user.home")
+       (java.io.File/separator)
+       file))
+
+(def default-cfg {:file (rel-to-home "tasks.txt")})
 
 (defn write-default-cfg []
-  (spit ".kali" (pr-str default-cfg)))
+  (spit (rel-to-home ".atea") (pr-str default-cfg)))
 
 (defn load-cfg []
   (try
-    (load-file ".kali")
+    (load-file (rel-to-home ".atea"))
     (catch Exception e
       (do
         (write-default-cfg)
