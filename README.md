@@ -38,7 +38,7 @@ Lines starting with a whitespace character are ignored; this allows for easy "no
 
 ## Time tracking
 
-Tracking time [allows](http://www.google.com/search?q=time%20tracking%20benefits) you to bill your clients more accurately, improve resource allocation by comparing estimates with actual times spent or just get a clear picture of what you have been doing the last couple of months.
+Tracking time allows you to bill your clients more accurately, improve resource allocation by comparing estimates with actual times spent or just get a clear picture of what you have been doing the last couple of months.
 
 To start working on a task, just click it:
 
@@ -48,7 +48,13 @@ When you are done, stop working:
 
 ![](https://github.com/pkamenarsky/atea/raw/master/doc/screens/8.png)
 
-Times are saved in a separate column based file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
+If you want you can append an optional estimate to any given task:
+
+    Make something to eat - 5m
+
+Minutes (`m`), hours (`h`) and days (`d`) are supported.
+
+Times and estimates are saved in a separate column based file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
 
 ## Dropbox integration
 

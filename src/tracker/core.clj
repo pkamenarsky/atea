@@ -29,6 +29,9 @@
 (defn to-str [mins]
   (format "[%02d:%02d]" (quot mins 60) (mod mins 60)))
 
+(defn to-time [x unit]
+  (Math/round (* (Float. x) ({"m" 1 "h" 60 "d" 1440} unit))))
+
 (defn key-task [task]
   (str (:project task) (:description task)))
 
@@ -100,12 +103,13 @@
        :time (Long. (match 4))})))
 
 (defn parse-ttask [line]
-  (let [match (re-matches #"(\d*) (\d*) \[(.*)\] (.*)" line)]
+  (let [match (re-matches #"(\d*) (\d*) (\d*) \[(.*)\] (.*)" line)]
     (when match
       {:priority (Long. (match 1)) 
        :time (Long. (match 2)) 
-       :project (match 3)
-       :description (match 4)})))
+       :estimate (Long. (match 3)) 
+       :project (match 4)
+       :description (match 5)})))
 
 (defn load-ttasks [file]
   (try 
@@ -122,10 +126,12 @@
 
 ; tasks
 (defn parse-task [line]
-  (let [match (re-matches #"\s*\[(.*)\]\s*(.*)" line)]
-    (if match
-      {:project (match 1) :description (match 2)}
-      {:project "Default" :description (string/trim line)})))
+  ; format is: [project] description - time
+  ; project and time are optional
+  (let [match (re-matches #"(\[(.*)\])?\s*(.*?)(\s*-\s*(\d+\.?\d*)([mhd]))?" line)]
+    {:project (or (match 2) "Default")
+     :description (match 3)
+     :estimate (if (match 5) (to-time (match 5) (match 6)) 0)}))
 
 (defn load-tasks [file]
   (try 
@@ -154,7 +160,7 @@
        " for " (:time active)))
 
 (defn write-ttask [ttask]
-  (apply format "%d %d [%s] %s" (map ttask [:priority :time :project :description])))
+  (apply format "%d %d %d [%s] %s" (map ttask [:priority :time :estimate :project :description])))
 
 (defn write-ttasks [file tasks ttasks new-active]
   (try
@@ -168,6 +174,7 @@
           ; merge textfile tasks and tracked tasks
           tmerged (vals (merge-with (fn [t tt] {:priority (:priority t) 
                                                 :project (:project t)
+                                                :estimate (:estimate t)
                                                 :description (:description t)
                                                 :time (:time tt)})
                                     (key-tasks tasks)
