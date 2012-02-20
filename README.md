@@ -56,7 +56,7 @@ Minutes (`m`), hours (`h`) and days (`d`) are supported.
 
 Times and estimates are saved in a separate csv file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
 
-## Configuration
+## Configuration & files
 
 Atea automatically creates an `~/.atea` file in the user home folder with the following contents:
 
@@ -65,6 +65,8 @@ Atea automatically creates an `~/.atea` file in the user home folder with the fo
     }
 
 This is where the current task file resides; you can change it to whatever you desire.
+
+Tracked times are stored in a file named `...-times.csv`, depending on the main tasks file name.
 
 ## Dropbox integration
 
