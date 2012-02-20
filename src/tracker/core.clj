@@ -126,8 +126,8 @@
 
 ; tasks
 (defn parse-task [line]
-  ; format is: [project] description - time
-  ; project and time are optional
+  ; format is: [project] description - estimate
+  ; project and estimate are optional
   (let [match (re-matches #"(\[(.*)\])?\s*(.*?)(\s*-\s*(\d+\.?\d*)([mhd]))?" line)]
     {:project (or (match 2) "Default")
      :description (match 3)
