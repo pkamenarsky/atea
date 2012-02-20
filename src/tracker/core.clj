@@ -264,5 +264,5 @@
                    (update-items file menu tasks (:active ttasks)
                                  (fn [new-active] (write-ttasks tfile tasks ttasks new-active)) 
                                  (fn [] (write-ttasks tfile tasks ttasks nil))))))) 
-    (Thread/sleep 0)))
+    (Thread/sleep Long/MAX_VALUE)))
 
