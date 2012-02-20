@@ -1,5 +1,7 @@
 ## Atea
 
+<div style="float: right"><img src="https://github.com/pkamenarsky/atea/raw/master/resources/icon_128.png"></div>
+
 [Atea](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg) is a minimalistic text file based menu bar time tracker for MacOS.
 
 There are a lot of great task managers out there - [Fogbugz](http://www.fogcreek.com/fogbugz/), [Pivotal](http://www.pivotaltracker.com/), [Lighthouse](http://lighthouseapp.com/) and [Trello](https://trello.com/) among others. So why yet another?
