@@ -94,23 +94,41 @@
 
 ; IO -----------------------------------------------------------------------
 
+(defn escape [s]
+  (string/replace s ";" "\\;"))
+
+(defn unescape [s]
+  (string/replace s "\\;" ";"))
+
 ; tracked tasks
 (defn parse-status [line]
-  (let [match (re-matches #"# Working on \"(.*)\" in \"(.*)\" since (\d*) for (\d*)" line)]
+  (let [match (re-matches #"# Working on \"\[(.*)\]\" - \"(.*)\" since (\d*) for (\d*)" line)]
     (when match
-      {:description (match 1)
-       :project (match 2)
+      {:project (match 1)
+       :description (match 2)
        :since (Long. (match 3))
        :time (Long. (match 4))})))
 
+(defn write-status [active]
+  (str "# Working on \"[" (:project active)
+       "]\" - \"" (:description active)
+       "\" since " (:since active)
+       " for " (:time active)))
+
 (defn parse-ttask [line]
-  (let [match (re-matches #"(\d*) (\d*) (\d*) \[(.*)\] (.*)" line)]
+  (let [match (re-matches #"\[(.*)\];(.*);(\d*);(\d*);(\d*)" line)]
     (when match
-      {:priority (Long. (match 1)) 
-       :time (Long. (match 2)) 
-       :estimate (Long. (match 3)) 
-       :project (match 4)
-       :description (match 5)})))
+      {:project (unescape (match 1))
+       :description (unescape (match 2)) 
+       :priority (Long. (match 3)) 
+       :time (Long. (match 4)) 
+       :estimate (Long. (match 5))})))
+
+(defn write-ttask [ttask]
+  (apply format "[%s];%s;%d;%d;%d"
+         (escape (:project ttask))
+         (escape (:description ttask))
+         (map ttask [:priority :time :estimate])))
 
 (defn load-ttasks [file]
   (try 
@@ -132,7 +150,8 @@
   (let [match (re-matches #"(\[(.*)\])?\s*(.*?)(\s*-\s*(\d+\.?\d*)([mhd]))?" line)]
     {:project (or (match 2) "Default")
      :description (match 3)
-     :estimate (if (match 5) (to-time (match 5) (match 6)) 0)}))
+     :estimate (if (match 5) (to-time (match 5) (match 6)) 0)
+     :time 0}))
 
 (defn load-tasks [file]
   (try 
@@ -153,15 +172,6 @@
 
 (defn key-tasks [tasks]
   (zipmap (map key-task tasks) tasks))
-
-(defn write-status [active]
-  (str "# Working on \"" (:description active)
-       "\" in \"" (:project active)
-       "\" since " (:since active)
-       " for " (:time active)))
-
-(defn write-ttask [ttask]
-  (apply format "%d %d %d [%s] %s" (map ttask [:priority :time :estimate :project :description])))
 
 (defn write-ttasks [file tasks ttasks new-active]
   (try
@@ -264,5 +274,5 @@
                    (update-items file menu tasks (:active ttasks)
                                  (fn [new-active] (write-ttasks tfile tasks ttasks new-active)) 
                                  (fn [] (write-ttasks tfile tasks ttasks nil))))))) 
-    (Thread/sleep Long/MAX_VALUE)))
+    (Thread/sleep 0)))
 
