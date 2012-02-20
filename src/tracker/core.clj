@@ -1,7 +1,8 @@
 (ns tracker.core
   (:require [clojure.string :as string])
   (:import org.jdesktop.jdic.tray.internal.impl.MacSystemTrayService)
-  (:import org.jdesktop.jdic.tray.internal.impl.MacTrayIconService))
+  (:import org.jdesktop.jdic.tray.internal.impl.MacTrayIconService)
+  (:gen-class))
 
 (defn load-icon [name]
   (javax.swing.ImageIcon. (javax.imageio.ImageIO/read (clojure.java.io/resource name))))
@@ -42,7 +43,7 @@
           {}
           (group-by :priority items)))
 
-(defn update-items [menu items active actfn deactfn]
+(defn update-items [file menu items active actfn deactfn]
   ; project / priority section functions
   (let [add-section
         (fn [add-sep? title sec-items]
@@ -86,8 +87,9 @@
 
     ; add items sorted by priority and project
     (let [part-items (sort (parition-items items))]
-      (when (first part-items)
-        (add-priority false (key (first part-items)) (val (first part-items)))) 
+      (if (first part-items)
+        (add-priority false (key (first part-items)) (val (first part-items)))
+        (.addItem menu (str "No tasks in " file) nil)) 
       (doseq [[pri prjs] (next part-items)] (add-priority true pri prjs)))))
 
 ; IO -----------------------------------------------------------------------
@@ -259,7 +261,7 @@
                  ; update menu
                  (when tasks
                    (reset! old-file file) 
-                   (update-items menu tasks (:active ttasks)
+                   (update-items file menu tasks (:active ttasks)
                                  (fn [new-active] (write-ttasks tfile tasks ttasks new-active)) 
                                  (fn [] (write-ttasks tfile tasks ttasks nil))))))) 
     (Thread/sleep 0)))
