@@ -64,9 +64,7 @@ Atea automatically creates an `~/.atea` file in the user home folder with the fo
 	    :file "/Users/.../tasks.txt"
     }
 
-This is where the current task file resides; you can change it to whatever you desire.
-
-Tracked times are stored in a file named `...-times.csv`, depending on the main tasks file name.
+This is where the current task file resides; you can change it to whatever you desire. Tracked times are stored in a file named `...-times.csv`, depending on the main tasks file name.
 
 ## Dropbox integration
 
