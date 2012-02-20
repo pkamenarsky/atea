@@ -1,4 +1,4 @@
-<img src="https://github.com/pkamenarsky/atea/raw/master/resources/icon_128.png" align="right">
+<!-- <img src="https://github.com/pkamenarsky/atea/raw/master/resources/icon_128.png" align="right"> -->
 
 # Atea
 
