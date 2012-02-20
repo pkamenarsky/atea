@@ -4,7 +4,7 @@ Atea is a minimalistic text file based menu bar time tracker for MacOS.
 
 There are a lot of great task managers out there - [Fogbugz](http://www.fogcreek.com/fogbugz/), [Pivotal](http://www.pivotaltracker.com/), [Lighthouse](http://lighthouseapp.com/) and [Trello](https://trello.com/) among others. So why yet another?
 
-If you are like me and find yourself in a situation where you want to *quickly* write down a task, bug or an idea you just thought of, more often than not you end up opening up your favorite text editor and saving a `TODO.txt` somewhere. At first it contains 3 or 4 entries; then it starts to grow - and you have to invent a custom [DSL](http://en.wikipedia.org/wiki/Domain-specific_language) just so you can track priorities, projects or time.
+If you are like me and find yourself in a situation where you want to *quickly* write down a task, bug or an idea you just thought of, more often than not you end up opening up your favorite text editor and saving a `TODO.txt` somewhere. At first it contains 3 or 4 entries; then it starts to grow - and you have to invent a custom DSL just so you can track priorities, projects or time.
 
 Even though a text file based system doesn't scale well (or at all) beyond a single person, it has one unbeatable advantage over web-interface based task management tools - locally editing and reordering tasks is *much* easier and faster, especially with editors like [vim](http://www.vim.org/) or [Emacs](http://www.gnu.org/software/emacs/).
 
@@ -54,7 +54,7 @@ If you want you can append an optional estimate to any given task:
 
 Minutes (`m`), hours (`h`) and days (`d`) are supported.
 
-Times and estimates are saved in a separate column based file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
+Times and estimates are saved in a separate csv file in plain text; this allows for easy data analysis by [combining](http://reallylongword.org/sedawk/) common Unix tools like [awk](http://www.grymoire.com/Unix/Awk.html) or [sed](http://www.ibm.com/developerworks/linux/library/l-sed1/index.html).
 
 ## Dropbox integration
 

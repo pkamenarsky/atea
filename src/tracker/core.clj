@@ -136,9 +136,9 @@
           status (parse-status (first lines))]
       (if status
         {:active status
-         :ttasks (map parse-ttask (next lines))}
+         :ttasks (or (map parse-ttask (next lines)) [])}
         {:active nil
-         :ttasks (map parse-ttask lines)}))
+         :ttasks (or (map parse-ttask lines) [])}))
     (catch java.io.FileNotFoundException e
       {:active nil
        :ttasks []})))
@@ -242,10 +242,10 @@
         default-cfg))))
 
 (defn ttname [tname]
-  (let [match (re-matches #"(.*)\.(.*)" tname)]
+  (let [match (re-matches #"(.*)\..*" tname)]
     (if match
-      (str (match 1) "-times." (match 2))
-      (str tname "-times"))))
+      (str (match 1) "-times.csv")
+      (str tname "-times.csv"))))
 
 (defn -main []
   (let [old-file (atom nil)
