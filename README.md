@@ -68,9 +68,9 @@ This is where the current task file resides; you can change it to whatever you d
 
 ## Dropbox integration
 
-Since tasks are stored in simple text files, [Dropbox](http://www.dropbox.com/) can be used for simple synchronization of tasks.
+Since tasks are stored in simple text files, [Dropbox](http://www.dropbox.com/) can be used for backup and synchronization.
 
-For example, you can start working on a task on you laptop, then move over to you main machine and have your tasks along with the current worked time automatically updated there; just set up the configuration file accordingly.
+For example, you can start working on a task on you laptop, then move over to you main machine and have your tasks along with the current worked time automatically updated there; just set up the configuration file to point to a file in your Dropbox folder.
 
 ## Multiple projects
 
