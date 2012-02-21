@@ -253,10 +253,11 @@
 
 (defn -main []
   (let [old-file (atom nil)
-        icon (load-icon "clock.png")
+        icon-inactive (load-icon "clock-inactive.png")
+        icon-active (load-icon "clock.png")
         menu (create-menu)]
     (.addTrayIcon (get-tray) menu 0)
-    (.setIcon menu icon)
+    (.setIcon menu icon-inactive)
     (.setActionListener
       menu
       (action #(let [file (:file (load-cfg))
@@ -276,7 +277,9 @@
                  (when tasks
                    (reset! old-file file) 
                    (update-items file menu tasks (:active ttasks)
-                                 (fn [new-active] (write-ttasks tfile tasks ttasks new-active)) 
-                                 (fn [] (write-ttasks tfile tasks ttasks nil))))))) 
+                                 (fn [new-active] ((write-ttasks tfile tasks ttasks new-active)
+                                                   (.setIcon menu icon-active))) 
+                                 (fn [] ((write-ttasks tfile tasks ttasks nil)
+                                         (.setIcon menu icon-inactive)))))))) 
     (Thread/sleep (Long/MAX_VALUE))))
 
