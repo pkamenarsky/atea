@@ -94,7 +94,7 @@
     
     (.addSeparator menu)
 
-    (.addItem menu "Quit" (action (fn [] 
+    (.addItem menu "Quit Atea" (action (fn [] 
       (deactfn)
       (System/exit 0))))))
 
