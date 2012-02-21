@@ -88,7 +88,7 @@ Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in
 
 If you just want to try out Atea, you can grab the pre-packaged `dmg` file [here](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg).
 
-You'll need [Leiningen](https://github.com/technomancy/leiningen), CLojure's build and dependency tool; first you have to make a standalone jar:
+You'll need [Leiningen](https://github.com/technomancy/leiningen), Clojure's build and dependency tool; first you have to make a standalone jar:
 
     lein deps
 	lein native-deps
