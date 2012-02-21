@@ -2,7 +2,7 @@
 
 # Atea
 
-[Atea](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg) is a minimalistic text file based menu bar time tracker for MacOS (get it [here](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg)).
+[Atea](https://github.com/downloads/pkamenarsky/atea/atea-1.0.1.dmg) is a minimalistic text file based menu bar time tracker for MacOS (get it [here](https://github.com/downloads/pkamenarsky/atea/atea-1.0.1.dmg)).
 
 There are a lot of great task managers out there - [Fogbugz](http://www.fogcreek.com/fogbugz/), [Pivotal](http://www.pivotaltracker.com/), [Lighthouse](http://lighthouseapp.com/) and [Trello](https://trello.com/) among others. So why yet another?
 
@@ -86,7 +86,7 @@ Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in
 
 ## Building
 
-If you just want to try out Atea, you can grab the pre-packaged `dmg` file [here](https://github.com/downloads/pkamenarsky/atea/atea-1.0.0.dmg).
+If you just want to try out Atea, you can grab the pre-packaged `dmg` file [here](https://github.com/downloads/pkamenarsky/atea/atea-1.0.1.dmg).
 
 In order to build, you'll need [Leiningen](https://github.com/technomancy/leiningen), Clojure's build and dependency tool; first you have to make a standalone jar:
 
