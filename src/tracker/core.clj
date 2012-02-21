@@ -283,6 +283,5 @@
                                  (fn []
                                    (write-ttasks tfile tasks ttasks nil)
                                    (.setIcon menu icon-inactive))))))) 
-   ; (Thread/sleep (Long/MAX_VALUE))
-    ))
+   (Thread/sleep (Long/MAX_VALUE))))
 
