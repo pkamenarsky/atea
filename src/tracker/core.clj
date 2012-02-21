@@ -92,11 +92,9 @@
         (.addItem menu (str "No tasks in " file) nil)) 
       (doseq [[pri prjs] (next part-items)] (add-priority true pri prjs)))
     
+    ; quit menu item
     (.addSeparator menu)
-
-    (.addItem menu "Quit Atea" (action (fn [] 
-      (deactfn)
-      (System/exit 0))))))
+    (.addItem menu "Quit Atea" (action #((deactfn) (System/exit 0))))))
 
 ; IO -----------------------------------------------------------------------
 
