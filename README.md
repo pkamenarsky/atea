@@ -76,7 +76,13 @@ For example, you can start working on a task on you laptop, then move over to yo
 
 ## Multiple projects
 
-WIP
+When invoked the `tasks.sh` script takes the name of the current directory and updates the configuration to point to `/Users/.../Dropbox/tasks/<current-dir-name>.tasks`.
+
+You may associate your favorite editor to open all files with the `.tasks` extension; when the `-o` option is supplied the script automatically invokes `open` on the current tasks file, i.e. fires up the associated text editor.
+
+Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in order to edit a Dropbox backed per-project tasks file, just type:
+
+    $ tasks.sh -o
 
 ## Building
 

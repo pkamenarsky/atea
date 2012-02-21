@@ -2,7 +2,12 @@
 
 if [[ `pwd` =~ .*/(.*) ]]; then
 	home=`cd ~; pwd`
-	tasks="${home}/Dropbox/times/${BASH_REMATCH[1]}.tasks"
+	tdir="${home}/Dropbox/tasks"
+
+	mkdir -p tdir
+
+	# update .atea configuration
+	tasks="${tdir}/${BASH_REMATCH[1]}.tasks"
 	echo "{:file \"${tasks}\"}" > ~/.atea
 
 	if [[ $1 == -o ]]; then
