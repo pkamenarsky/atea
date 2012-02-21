@@ -90,6 +90,7 @@ You'll need [Leiningen](https://github.com/technomancy/leiningen), CLojure's bui
 
     lein deps
 	lein native-deps
+	cp native/libtray.jnilib .
 	lein uberjar
 
 At this point you can just start the jar and it will work.
