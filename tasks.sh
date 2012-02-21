@@ -11,6 +11,7 @@ if [[ `pwd` =~ .*/(.*) ]]; then
 	echo "{:file \"${tasks}\"}" > ~/.atea
 
 	if [[ $1 == -o ]]; then
+		touch $tasks
 		open $tasks
 	fi
 fi
