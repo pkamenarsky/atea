@@ -86,11 +86,15 @@ Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in
 
 ## Building
 
+You'll need [Leiningen](https://github.com/technomancy/leiningen), CLojure's build and dependency tool; first you have to make a standalone jar:
+
     lein deps
 	lein native-deps
 	lein uberjar
 
-At this point you'll need to use Apple's Jar Bundler to create `atea.app` out of the generated standalone jar (this can be automated though, patches welcome). In order to hide the dock icon, edit the `atea.app/Contents/Info.plist` file and add the following key:
+At this point you can just start the jar and it will work.
+
+If you want a native app, you'll need to use Apple's Jar Bundler to create `atea.app` out of the generated standalone jar (this can be automated though, patches welcome). In order to hide the dock icon, edit the `atea.app/Contents/Info.plist` file and add the following key:
 
     <key>LSUIElement</key>
     <string>1</string>
