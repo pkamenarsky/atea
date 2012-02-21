@@ -277,9 +277,12 @@
                  (when tasks
                    (reset! old-file file) 
                    (update-items file menu tasks (:active ttasks)
-                                 (fn [new-active] ((write-ttasks tfile tasks ttasks new-active)
-                                                   (.setIcon menu icon-active))) 
-                                 (fn [] ((write-ttasks tfile tasks ttasks nil)
-                                         (.setIcon menu icon-inactive)))))))) 
-    (Thread/sleep (Long/MAX_VALUE))))
+                                 (fn [new-active]
+                                   (write-ttasks tfile tasks ttasks new-active)
+                                   (.setIcon menu icon-active)) 
+                                 (fn []
+                                   (write-ttasks tfile tasks ttasks nil)
+                                   (.setIcon menu icon-inactive))))))) 
+   ; (Thread/sleep (Long/MAX_VALUE))
+    ))
 
