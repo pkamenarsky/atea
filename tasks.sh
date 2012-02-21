@@ -4,7 +4,7 @@ if [[ `pwd` =~ .*/(.*) ]]; then
 	home=`cd ~; pwd`
 	tdir="${home}/Dropbox/tasks"
 
-	mkdir -p tdir
+	mkdir -p $tdir
 
 	# update .atea configuration
 	tasks="${tdir}/${BASH_REMATCH[1]}.tasks"
