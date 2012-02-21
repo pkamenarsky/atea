@@ -80,7 +80,7 @@ When invoked the `tasks.sh` script takes the name of the current directory and u
 
 You may associate your favorite editor to open all files with the `.tasks` extension; when the `-o` option is supplied the script automatically invokes `open` on the current tasks file, i.e. fires up the associated text editor.
 
-Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in order to edit a Dropbox backed per-project tasks file, just type:
+Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in order to edit and switch to a Dropbox backed per-project tasks file, just type:
 
     $ tasks.sh -o
 
