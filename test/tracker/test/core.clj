@@ -2,5 +2,6 @@
   (:use [tracker.core])
   (:use [clojure.test]))
 
-(deftest replace-me ;; FIXME: write
-  (is false "No tests have been written."))
+(deftest ttname-test
+  (is (= ".tasks-times.csv" (ttname ".tasks")))
+  (is (= "tasks-times.csv" (ttname "tasks.txt"))))
