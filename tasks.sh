@@ -1,5 +1,12 @@
 #!/bin/bash
 
+localtask=`ls *.tasks 2> /dev/null | head -n 1`
+
+if [[ -n $localtask ]]; then
+	echo "{:file \"`pwd`/${localtask}\"}" > ~/.atea
+	exit
+fi
+
 if [[ `pwd` =~ .*/(.*) ]]; then
 	home=`cd ~; pwd`
 	tdir="${home}/Dropbox/tasks"
