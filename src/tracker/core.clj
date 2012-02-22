@@ -246,7 +246,7 @@
         default-cfg))))
 
 (defn ttname [tname]
-  (let [match (re-matches #"(.*)\..*" tname)]
+  (let [match (re-matches #"(.+)\..*" tname)]
     (if match
       (str (match 1) "-times.csv")
       (str tname "-times.csv"))))
