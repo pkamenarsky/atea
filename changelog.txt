@@ -1,0 +1,6 @@
+1.0.3
+
+- fix for NPE on empty -times.csv
+- grayed out icon when inactive
+- fix for .tasks file names starting with a dot
+
