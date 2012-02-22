@@ -136,13 +136,13 @@
 
 (defn load-ttasks [file]
   (try 
-    (let [lines (string/split-lines (slurp file))
-          status (parse-status (first lines))]
+    (let [lines (filter (comp not empty?) (string/split-lines (slurp file))) 
+          status (when (first lines) (parse-status (first lines)))]
       (if status
         {:active status
-         :ttasks (or (map parse-ttask (next lines)) [])}
+         :ttasks (map parse-ttask (next lines))}
         {:active nil
-         :ttasks (or (map parse-ttask lines) [])}))
+         :ttasks (map parse-ttask lines)}))
     (catch java.io.FileNotFoundException e
       {:active nil
        :ttasks []})))
@@ -196,9 +196,8 @@
                                     kts))
           
           ; get active time
-          tactive (if new-active 
-                    (assoc new-active :time (get-in kts [(key-task new-active) :time] 0))
-                    nil)
+          tactive (when new-active 
+                    (assoc new-active :time (get-in kts [(key-task new-active) :time] 0)))
 
           ; write lines
           lines (map write-ttask tmerged)
