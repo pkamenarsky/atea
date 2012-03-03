@@ -84,6 +84,10 @@ Place `tasks.sh` somewhere in yout path (for example `/usr/share/bin`); then, in
 
     $ tasks.sh -o
 
+## User contributions
+
+Check out [atea-contrib](https://github.com/pkamenarsky/atea-contrib), a separate repository containing user contributions for Atea.
+
 ## Building
 
 If you just want to try out Atea, you can grab the pre-packaged `dmg` file [here](https://github.com/downloads/pkamenarsky/atea/atea-1.0.3.dmg).
