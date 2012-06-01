@@ -21,5 +21,10 @@ if [[ `pwd` =~ .*/(.*) ]]; then
 		touch $tasks
 		open $tasks
 	fi
+
+	if [[ $1 == -a ]]; then
+		echo $2 >> $tasks
+	fi
+
 fi
 
